@@ -307,12 +307,12 @@ void mergeSort(int l, int r, int p) {
     mergeSort(mid + 1, r, p);
     int i = l, j = mid + 1, k = l;
     while(i <= mid && j <= r) {
-        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) std::swap(FUCKTS[k++], FUCK[i++]);//FUCKTS[k++] = FUCK[i++];
-        else std::swap(FUCKTS[k++], FUCK[j++]);
+        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) FUCKTS[k++] = FUCK[i++];
+        else FUCKTS[k++] = FUCK[j++];
     }
-    while(i <= mid) std::swap(FUCKTS[k++], FUCK[i++]);  //FUCKTS[k++] = FUCK[i++];
-    while(j <= r) std::swap(FUCKTS[k++], FUCK[j++]);    //FUCKTS[k++] = FUCK[j++];
-    for(k = l; k <= r; ++k) std::swap(FUCK[k], FUCKTS[k]);  //FUCK[k] = FUCKTS[k];
+    while(i <= mid) FUCKTS[k++] = FUCK[i++];
+    while(j <= r) FUCKTS[k++] = FUCK[j++];
+    for(k = l; k <= r; ++k) FUCK[k] = FUCKTS[k];
 }
 
 void sort(int l, int r, int p) {
