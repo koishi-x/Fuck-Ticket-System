@@ -51,10 +51,7 @@ template<class T>
 class wrapFstream {
     //char filename[10];
     std::fstream io;
-    class ZHANWEIFU {
-        bool awa[sizeof(T)];
-    };
-    int last = 0;
+    int last{0};
 public:
     explicit wrapFstream(char *FILE) {
         io.open(FILE, std::fstream::binary|std::fstream::in | std::fstream::out);
@@ -106,12 +103,12 @@ public:
 
 struct trainOnStation {
     string_t trainID;
-    int ordinal;
-    int startTime;  //hh*60+mm, local time
-    int saleDateBegin, saleDateEnd;
-    int arriveTime, leaveTime, arrivePrice; //the time(minute) and price from start station to current station.
-    int nextAddr;
-    trainOnStation(): nextAddr(-1){}
+    int ordinal{0};
+    int startTime{0};  //hh*60+mm, local time
+    int saleDateBegin{0}, saleDateEnd{0};
+    int arriveTime{0}, leaveTime{0}, arrivePrice{0}; //the time(minute) and price from start station to current station.
+    int nextAddr{-1};
+    //trainOnStation(): nextAddr(-1), trainID(){}
     bool operator<(const trainOnStation &obj) const {
         return trainID < obj.trainID;
     }
@@ -122,29 +119,29 @@ struct trainOnStation {
 
 struct tripOnStation {
     string_t trainID;
-    int startTime;  //local time
-    int arriveTime; //global time
-    int takeTime;
+    int startTime{0};  //local time
+    int arriveTime{0}; //global time
+    int takeTime{0};
     //Can be calctulated by arriveTime - startTime(x)
-    int price;
-    int seat;
-    int nextAddr;
-    tripOnStation(): nextAddr(-1) {}
+    int price{0};
+    int seat{0};
+    int nextAddr{-1};
+    //tripOnStation(): nextAddr(-1) {}
 };
 
 class Train {   //All arrays are 0-base
     static constexpr int MAX_STATION_NUM = 100;
 public:
     string_t trainID;
-    int stationNum;
+    int stationNum{0};
     string_t stations[MAX_STATION_NUM];
-    int seatNum;
-    int prices [MAX_STATION_NUM-1];
-    int startTime;  //calculated by hh * 60 + mm
-    int travelTimes[MAX_STATION_NUM-1];
-    int stopoverTimes[MAX_STATION_NUM-1];   //stopoverTimes[0] has no meaning.
-    int saleDateBegin, saleDateEnd;
-    char type;
+    int seatNum{0};
+    int prices [MAX_STATION_NUM-1]{0};
+    int startTime{0};  //calculated by hh * 60 + mm
+    int travelTimes[MAX_STATION_NUM-1]{0};
+    int stopoverTimes[MAX_STATION_NUM-1]{0};   //stopoverTimes[0] has no meaning.
+    int saleDateBegin{0}, saleDateEnd{0};
+    char type{0};
     Train() = default;
     Train(const Train &obj) {
         trainID = obj.trainID;
@@ -169,9 +166,9 @@ public:
     //string_t trainID;
     //int Date;
     //todo: add some parameter
-    int stationNum;
-    int restSeat[MAX_STATION_NUM-1];
-    int head;
+    int stationNum{0};
+    int restSeat[MAX_STATION_NUM-1]{0};
+    int head{-1};
     bool operator<(const Trip &obj) const {
         return 0;   //no meaning
     }
@@ -193,10 +190,11 @@ public:
 
 struct orderOnTrip {
     string_t username;
-    int timestamp;
-    int need;
-    int sOrdinal, tOrdinal;
-    int nextAddr;
+    int timestamp{0};
+    int need{0};
+    int sOrdinal{0};
+    int tOrdinal{0};
+    int nextAddr{-1};
     orderOnTrip(): nextAddr(-1) {}
 
 };
@@ -207,8 +205,8 @@ public:
     string_t password;
     string_t name;
     string_t mailAddr;
-    int privilege;
-    int head;
+    int privilege{-1};
+    int head{-1};
     Account(): privilege(-1), head(-1) {}
     bool operator<(const Account &obj) const {
         return username < obj.username;
@@ -218,32 +216,40 @@ public:
 struct orderOnAccount {
     string_t trainID;
     string_t fromStationID, toStationID;
-    int sOrdinal, tOrdinal, startDate;
-    int leaveTime, arriveTime;  //global time
-    int price, seat;
-    int timeStamp;
-    enum{success, pending, refunded} status;
-    int nextAddr;
+    int sOrdinal{0};
+    int tOrdinal{0};
+    int startDate{0};
+    int leaveTime{0};
+    int arriveTime{0};  //global time
+    int price{0};
+    int seat{0};
+    int timeStamp{0};
+    enum{success, pending, refunded} status{success};
+    int nextAddr{-1};
 };
 
 int queryTicketNum;
 struct queryTicketResult {
     string_t trainID;
-    int leaveTime;
-    int takeTime;
-    int price;
-    int seat;
+    int leaveTime{0};
+    int takeTime{0};
+    int price{0};
+    int seat{0};
 }FUCK[10001], FUCKTS[10001];
 
 struct queryTransferResult {
     string_t trainID1, trainID2;
-    int startTime1;     //local time
-    int arriveTime1;    //global time
-    int startTime2;     //global time;
-    int arriveTime2;    //global time;
+    int startTime1{0};     //local time
+    int arriveTime1{0};    //global time
+    int startTime2{0};     //global time;
+    int arriveTime2{0};    //global time;
     string_t transferStation;
-    int time, price;
-    int price1, price2, seat1, seat2;
+    int time{0};
+    int price{0};
+    int price1{0};
+    int price2{0};
+    int seat1{0};
+    int seat2{0};
 
 };
 
@@ -361,8 +367,8 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 
 int main() {
 
-    //freopen("testcases/basic_extra/1.in", "r", stdin);
-    //freopen("my.out", "w", stdout);
+    freopen("testcases/basic_6/2.in", "r", stdin);
+    freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
     std::string timeStamp, operationName, _key, argument;

@@ -13,7 +13,7 @@ class string_t {
 public:
     char s[32];
 
-    string_t(){s[0] = 0;}
+    string_t(){memset(s, 0, sizeof s);}
 
     string_t(const string_t &obj) {
         strcpy(s, obj.s);
@@ -55,7 +55,7 @@ std::istream& operator>>(std::istream &is, string_t &obj) {
 
 template<class Key, class T>
 class BPT {
-    static constexpr int BLOCK_SIZE = 16834;
+    static constexpr int BLOCK_SIZE = 16384;
     static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
     static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
     char filename[20];
@@ -93,6 +93,7 @@ class BPT {
         int addr[M+1];
         bodyNode() : n(0) {
             memset(addr, -1, sizeof addr);
+            memset(key, 0, sizeof key);
         }
         bodyNode &operator=(const bodyNode &obj) {
             if (this == &obj) return *this;
@@ -106,7 +107,7 @@ class BPT {
         int n;
         dataInfo data[L+1];
         int preAddr, nextAddr;
-        leafNode() : n(0), preAddr(-1), nextAddr(-1) {}
+        leafNode() : n(0), preAddr(-1), nextAddr(-1) {memset(data, 0, sizeof data);}
         leafNode &operator=(const leafNode &obj) {
             if (this == &obj) return *this;
             n = obj.n;
@@ -541,6 +542,7 @@ public:
             io.open(filename, std::fstream::binary | std::fstream::out);
             siz = 0;
             last = 0;
+            //write(ZHANWEIFU(), 0);
             io.close();
             io.open(filename, std::fstream::binary|std::fstream::in | std::fstream::out);
         }
