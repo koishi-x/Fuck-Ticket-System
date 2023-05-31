@@ -198,7 +198,7 @@ public:
         head = obj.head;
         for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
     }
-     Trip &operator=(const Trip &obj) {
+    Trip &operator=(const Trip &obj) {
         if (this == &obj) return *this;
         stationNum = obj.stationNum;
         head = obj.head;
@@ -307,16 +307,16 @@ void mergeSort(int l, int r, int p) {
     mergeSort(mid + 1, r, p);
     int i = l, j = mid + 1, k = l;
     while(i <= mid && j <= r) {
-        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) FUCKTS[k++] = FUCK[i++];
-        else FUCKTS[k++] = FUCK[j++];
+        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) std::swap(FUCKTS[k++], FUCK[i++]);//FUCKTS[k++] = FUCK[i++];
+        else std::swap(FUCKTS[k++], FUCK[j++]);
     }
-    while(i <= mid) FUCKTS[k++] = FUCK[i++];
-    while(j <= r) FUCKTS[k++] = FUCK[j++];
-    for(k = l; k <= r; ++k) FUCK[k] = FUCKTS[k];
+    while(i <= mid) std::swap(FUCKTS[k++], FUCK[i++]);  //FUCKTS[k++] = FUCK[i++];
+    while(j <= r) std::swap(FUCKTS[k++], FUCK[j++]);    //FUCKTS[k++] = FUCK[j++];
+    for(k = l; k <= r; ++k) std::swap(FUCK[k], FUCKTS[k]);  //FUCK[k] = FUCKTS[k];
 }
 
 void sort(int l, int r, int p) {
-    if (r <= 3) {
+    if (r <= 0) {
         for (int i = l; i <= r; ++i)
             for (int j = l + 1; j <= r; ++j)
                 if (cmpQueryTicketResult(FUCK[j], FUCK[i], p)) std::swap(FUCK[i], FUCK[j]);
@@ -687,8 +687,8 @@ int main() {
                     nodeInfo.nextAddr = -1;
                     nodeInfo.ordinal = i;
                     if (i > 0) {
-                    //    nodeInfo.arriveTime += curTrain.second.travelTimes[i-1];
-                    //    nodeInfo.arriveTime += curTrain.second.prices[i-1];
+                        //    nodeInfo.arriveTime += curTrain.second.travelTimes[i-1];
+                        //    nodeInfo.arriveTime += curTrain.second.prices[i-1];
                         nodeInfo.arrivePrice += curTrain.second.prices[i-1];
                         nodeInfo.arriveTime = nodeInfo.leaveTime + curTrain.second.travelTimes[i-1];
                         if (i < curTrain.second.stationNum - 1) nodeInfo.leaveTime = nodeInfo.arriveTime + curTrain.second.stopoverTimes[i];
@@ -977,7 +977,7 @@ int main() {
                     tttt = totalTime;
                     //if (tt.ordinal < curTrain.stationNum - 1) totalTime += curTrain.stopoverTimes[tt.ordinal];
                     for (int i = tt.ordinal - 1; i >= 0; --i) {
-                    //    takeTime += curTrain.travelTimes[i];
+                        //    takeTime += curTrain.travelTimes[i];
                         totalTime -= curTrain.travelTimes[i];
                         price += curTrain.prices[i];
                         Station curStation = stationTfList.find(curTrain.stations[i]).second;
