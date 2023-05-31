@@ -157,19 +157,6 @@ public:
     bool operator<(const Train &obj) const {
         return trainID < obj.trainID;
     }
-    Train &operator=(const Train &obj) {
-        if (this == &obj) return *this;
-        trainID = obj.trainID;
-        stationNum = obj.stationNum;
-        for (int i = 0; i < stationNum; ++i) stations[i] = obj.stations[i];
-        seatNum = obj.seatNum;
-        for (int i = 0; i < stationNum - 1; ++i) prices[i] = obj.prices[i], travelTimes[i] = obj.travelTimes[i], stopoverTimes[i] = obj.stopoverTimes[i];
-        startTime = obj.startTime;
-        saleDateBegin = obj.saleDateBegin;
-        saleDateEnd = obj.saleDateEnd;
-        type = obj.type;
-        return *this;
-    }
 };
 
 class Trip {    //车次
@@ -197,13 +184,6 @@ public:
         stationNum = obj.stationNum;
         head = obj.head;
         for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
-    }
-    Trip &operator=(const Trip &obj) {
-        if (this == &obj) return *this;
-        stationNum = obj.stationNum;
-        head = obj.head;
-        for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
-        return *this;
     }
 }tmpTrip[100];  //0-base
 
