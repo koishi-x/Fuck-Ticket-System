@@ -302,21 +302,6 @@ int switchTsToInt(std::string timeStamp) {
     return ts;
 }
 
-
-/*
-BPT<string_t, Account> userList("file/1");
-BPT<string_t, bool> loginList("file/2");
-BPT<string_t, Train> trainList("file/3");
-BPT<string_t, bool> releaseList("file/4");
-BPT<string_t, Station> stationList("file/5");
-wrapFstream<trainOnStation> ioStation("file/6");
-BPT<pair<string_t, int>, Trip> tripList("file/7");
-wrapFstream<orderOnTrip> ioOrder("file/8");
-wrapFstream<tripOnStation> ioTrip("file/9");
-BPT<string_t, Station> stationTfList("file/10");
-wrapFstream<orderOnAccount> ioAccount("file/11");
-*/
-
 BPT<string_t, Account> userList("1");
 BPT<string_t, bool> loginList("2");
 BPT<string_t, Train> trainList("3");
@@ -328,8 +313,10 @@ wrapFstream<orderOnTrip> ioOrder("8");
 wrapFstream<tripOnStation> ioTrip("9");
 BPT<string_t, Station> stationTfList("10");
 wrapFstream<orderOnAccount> ioAccount("11");
+BPT<pair<string_t, int>, int> checkYourCode("12");
 
 void satisfiyOrder(const string_t &username, int ts) {
+    /*
     Account curUser = userList.find(username).second;
     int ptr = curUser.head;
     orderOnAccount orderA;
@@ -342,7 +329,13 @@ void satisfiyOrder(const string_t &username, int ts) {
             break;
         }
         ptr = orderA.nextAddr;
-    }
+    }*/
+    int ptr = checkYourCode.find(pair<string_t, int>(username, ts)).second;
+    checkYourCode.erase(pair<string_t, int>(username, ts));
+    orderOnAccount orderA;
+    ioAccount.read(orderA, ptr);
+    orderA.status = orderOnAccount::success;
+    ioAccount.write(orderA, ptr);
 }
 
 int dealPendingQueue(Trip &curTrip, int addr) {
@@ -367,7 +360,8 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 
 int main() {
 
-    //freopen("testcases/basic_6/3.in", "r", stdin);
+    //freopen("testcases/pressure_1_easy/2.in", "r", stdin);
+    //freopen("testcases/basic_6/1.in", "r", stdin);
     //freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
@@ -501,8 +495,8 @@ int main() {
                 if (newAcc.privilege != -1) {
                     modifyUser.second.privilege = newAcc.privilege;
                 }
-                userList.erase(modifyUser.second.username);
-                userList.insert(modifyUser.second.username, modifyUser.second);
+
+                userList.modify(modifyUser.second.username, modifyUser.second);
                 std::cout << timeStamp << ' ' << modifyUser.second.username << ' '
                           << modifyUser.second.name << ' ' << modifyUser.second.mailAddr << ' ' << modifyUser.second.privilege << std::endl;
             } else {
@@ -703,8 +697,6 @@ int main() {
                     }
                     if (head != curStation.second.head) {
                         curStation.second.head = head;
-                        //stationList.erase(stationID);
-                        //stationList.insert(stationID, curStation);
                         if(curStation.first) stationList.modify(stationID, curStation.second);
                         else stationList.insert(stationID, curStation.second);
                     }
@@ -1052,74 +1044,84 @@ int main() {
                 //Station startStation = stationList.find(startStationID).second;
                 //Station toStation = stationList.find(toStationID).second;
                 Train curTrain = trainList.find(orderA.trainID).second;
-
-                int sOrdinal = -1, tOrdinal = -1;
-                int sumTime[100] = {0}, sumPrice[100] = {0};
-                for (int i = 0; i < curTrain.stationNum; ++i) {
-                    if (curTrain.stations[i] == orderA.fromStationID) sOrdinal = i;
-                    if (curTrain.stations[i] == orderA.toStationID) tOrdinal = i;
-                    if (i > 0) sumTime[i] = sumTime[i-1] + curTrain.travelTimes[i-1], sumPrice[i] = sumPrice[i-1] + curTrain.prices[i-1];
-                    if (i < curTrain.stationNum - 1 && i > 0) sumTime[i] += curTrain.stopoverTimes[i];
-                }
-
-
-                //warning: avoid meaningless order.
-                if (sOrdinal != -1 && tOrdinal != -1 && sOrdinal < tOrdinal &&
-                        (curTrain.saleDateBegin - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal] < date * 1440 &&
-                        (curTrain.saleDateEnd - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal] >= (date - 1) * 1440) {
-
-
-                    int startDate = curTrain.saleDateBegin + (((date - 1) * 1440 + (curTrain.startTime + sumTime[sOrdinal]) % 1440) - ((curTrain.saleDateBegin - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal])) / 1440;
-                    Trip curTrip = tripList.find(pair<string_t, int>(orderA.trainID, startDate)).second;
-
-                    int maxSeat = curTrip.restSeat[sOrdinal];
-                    for (int i = sOrdinal; i < tOrdinal; ++i) {
-                        maxSeat = std::min(maxSeat, curTrip.restSeat[i]);
+                if (curTrain.seatNum >= orderA.seat) {
+                    int sOrdinal = -1, tOrdinal = -1;
+                    int sumTime[100] = {0}, sumPrice[100] = {0};
+                    for (int i = 0; i < curTrain.stationNum; ++i) {
+                        if (curTrain.stations[i] == orderA.fromStationID) sOrdinal = i;
+                        if (curTrain.stations[i] == orderA.toStationID) tOrdinal = i;
+                        if (i > 0)
+                            sumTime[i] = sumTime[i - 1] + curTrain.travelTimes[i - 1], sumPrice[i] =
+                                                                                               sumPrice[i - 1] +
+                                                                                               curTrain.prices[i -
+                                                                                                               1];
+                        if (i < curTrain.stationNum - 1 && i > 0) sumTime[i] += curTrain.stopoverTimes[i];
                     }
 
-                    orderA.price = sumPrice[tOrdinal] - sumPrice[sOrdinal];
-                    orderA.leaveTime = (startDate - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal];
-                    orderA.arriveTime = (startDate - 1) * 1440 + curTrain.startTime + sumTime[tOrdinal];
-                    if (tOrdinal < curTrain.stationNum - 1) orderA.arriveTime -= curTrain.stopoverTimes[tOrdinal];
-                    orderA.sOrdinal = sOrdinal;
-                    orderA.tOrdinal = tOrdinal;
-                    orderA.startDate = startDate;
 
-                    if (maxSeat >= orderA.seat) {
-                        orderA.status = orderOnAccount::success;
+                    //warning: avoid meaningless order.
+                    if (sOrdinal != -1 && tOrdinal != -1 && sOrdinal < tOrdinal &&
+                        (curTrain.saleDateBegin - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal] < date * 1440 &&
+                        (curTrain.saleDateEnd - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal] >=
+                        (date - 1) * 1440) {
+
+
+                        int startDate = curTrain.saleDateBegin +
+                                        (((date - 1) * 1440 + (curTrain.startTime + sumTime[sOrdinal]) % 1440) -
+                                         ((curTrain.saleDateBegin - 1) * 1440 + curTrain.startTime +
+                                          sumTime[sOrdinal])) /
+                                        1440;
+                        Trip curTrip = tripList.find(pair<string_t, int>(orderA.trainID, startDate)).second;
+
+                        int maxSeat = curTrip.restSeat[sOrdinal];
                         for (int i = sOrdinal; i < tOrdinal; ++i) {
-                            curTrip.restSeat[i] -= orderA.seat;
+                            maxSeat = std::min(maxSeat, curTrip.restSeat[i]);
                         }
-                        tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
 
-                        orderA.nextAddr = curUser.head;
-                        curUser.head = ioAccount.newPos();
-                        ioAccount.write(orderA, curUser.head);
-                        userList.modify(curUsername, curUser);
+                        orderA.price = sumPrice[tOrdinal] - sumPrice[sOrdinal];
+                        orderA.leaveTime = (startDate - 1) * 1440 + curTrain.startTime + sumTime[sOrdinal];
+                        orderA.arriveTime = (startDate - 1) * 1440 + curTrain.startTime + sumTime[tOrdinal];
+                        if (tOrdinal < curTrain.stationNum - 1) orderA.arriveTime -= curTrain.stopoverTimes[tOrdinal];
+                        orderA.sOrdinal = sOrdinal;
+                        orderA.tOrdinal = tOrdinal;
+                        orderA.startDate = startDate;
 
-                        ok = true;
-                        std::cout << timeStamp << ' ' << (long long)orderA.seat * orderA.price << std::endl;
-                    } else if (isCandidate) {
-                        orderA.status = orderOnAccount::pending;
+                        if (maxSeat >= orderA.seat) {
+                            orderA.status = orderOnAccount::success;
+                            for (int i = sOrdinal; i < tOrdinal; ++i) {
+                                curTrip.restSeat[i] -= orderA.seat;
+                            }
+                            tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
 
-                        orderA.nextAddr = curUser.head;
-                        curUser.head = ioAccount.newPos();
-                        ioAccount.write(orderA, curUser.head);
-                        userList.modify(curUsername, curUser);
+                            orderA.nextAddr = curUser.head;
+                            curUser.head = ioAccount.newPos();
+                            ioAccount.write(orderA, curUser.head);
+                            userList.modify(curUsername, curUser);
 
-                        orderOnTrip orderT;
-                        orderT.timestamp = orderA.timeStamp;
-                        orderT.username = curUsername;
-                        orderT.need = orderA.seat;
-                        orderT.sOrdinal = sOrdinal, orderT.tOrdinal = tOrdinal;
-                        orderT.nextAddr = curTrip.head;
+                            ok = true;
+                            std::cout << timeStamp << ' ' << (long long) orderA.seat * orderA.price << std::endl;
+                        } else if (isCandidate) {
+                            orderA.status = orderOnAccount::pending;
 
-                        curTrip.head = ioOrder.newPos();
-                        ioOrder.write(orderT, curTrip.head);
-                        tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
+                            orderA.nextAddr = curUser.head;
+                            curUser.head = ioAccount.newPos();
+                            ioAccount.write(orderA, curUser.head);
+                            userList.modify(curUsername, curUser);
+                            checkYourCode.insert(pair<string_t, int>(curUsername, orderA.timeStamp), curUser.head);
+                            orderOnTrip orderT;
+                            orderT.timestamp = orderA.timeStamp;
+                            orderT.username = curUsername;
+                            orderT.need = orderA.seat;
+                            orderT.sOrdinal = sOrdinal, orderT.tOrdinal = tOrdinal;
+                            orderT.nextAddr = curTrip.head;
 
-                        ok = true;
-                        std::cout << timeStamp << " queue" << std::endl;
+                            curTrip.head = ioOrder.newPos();
+                            ioOrder.write(orderT, curTrip.head);
+                            tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
+
+                            ok = true;
+                            std::cout << timeStamp << " queue" << std::endl;
+                        }
                     }
                 }
             }
