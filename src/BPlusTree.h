@@ -55,7 +55,7 @@ inline std::istream& operator>>(std::istream &is, string_t &obj) {
 
 template<class Key, class T>
 class BPT {
-    static constexpr int BLOCK_SIZE = 16384;
+    static constexpr int BLOCK_SIZE = 10000;
     static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
     static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
     char filename[20];
