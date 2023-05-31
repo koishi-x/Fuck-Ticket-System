@@ -316,10 +316,10 @@ void mergeSort(int l, int r, int p) {
 }
 
 void sort(int l, int r, int p) {
-    if (r <= 0) {
-        for (int i = l; i <= r; ++i)
-            for (int j = l + 1; j <= r; ++j)
-                if (cmpQueryTicketResult(FUCK[j], FUCK[i], p)) std::swap(FUCK[i], FUCK[j]);
+    if (r <= 4) {
+        for (int i = r; i >= l; --i)
+            for (int j = l; j < i; ++j)
+                if (cmpQueryTicketResult(FUCK[j+1], FUCK[j], p)) std::swap(FUCK[j+1], FUCK[j]);
     } else mergeSort(l, r, p);
 }
 
@@ -386,7 +386,7 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 
 int main() {
 
-    //freopen("testcases/basic_6/1.in", "r", stdin);
+    //freopen("testcases/basic_4/2.in", "r", stdin);
     //freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
