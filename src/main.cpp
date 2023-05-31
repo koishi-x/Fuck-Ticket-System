@@ -157,6 +157,19 @@ public:
     bool operator<(const Train &obj) const {
         return trainID < obj.trainID;
     }
+    Train &operator=(const Train &obj) {
+        if (this == &obj) return *this;
+        trainID = obj.trainID;
+        stationNum = obj.stationNum;
+        for (int i = 0; i < stationNum; ++i) stations[i] = obj.stations[i];
+        seatNum = obj.seatNum;
+        for (int i = 0; i < stationNum - 1; ++i) prices[i] = obj.prices[i], travelTimes[i] = obj.travelTimes[i], stopoverTimes[i] = obj.stopoverTimes[i];
+        startTime = obj.startTime;
+        saleDateBegin = obj.saleDateBegin;
+        saleDateEnd = obj.saleDateEnd;
+        type = obj.type;
+        return *this;
+    }
 };
 
 class Trip {    //车次
@@ -184,6 +197,13 @@ public:
         stationNum = obj.stationNum;
         head = obj.head;
         for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
+    }
+     Trip &operator=(const Trip &obj) {
+        if (this == &obj) return *this;
+        stationNum = obj.stationNum;
+        head = obj.head;
+        for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
+        return *this;
     }
 }tmpTrip[100];  //0-base
 
@@ -287,12 +307,20 @@ void mergeSort(int l, int r, int p) {
     mergeSort(mid + 1, r, p);
     int i = l, j = mid + 1, k = l;
     while(i <= mid && j <= r) {
-        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) FUCKTS[k++] = FUCK[i++];
-        else FUCKTS[k++] = FUCK[j++];
+        if(cmpQueryTicketResult(FUCK[i], FUCK[j], p)) std::swap(FUCKTS[k++], FUCK[i++]);//FUCKTS[k++] = FUCK[i++];
+        else std::swap(FUCKTS[k++], FUCK[j++]);
     }
-    while(i <= mid) FUCKTS[k++] = FUCK[i++];
-    while(j <= r) FUCKTS[k++] = FUCK[j++];
-    for(k = l; k <= r; ++k) FUCK[k] = FUCKTS[k];
+    while(i <= mid) std::swap(FUCKTS[k++], FUCK[i++]);  //FUCKTS[k++] = FUCK[i++];
+    while(j <= r) std::swap(FUCKTS[k++], FUCK[j++]);    //FUCKTS[k++] = FUCK[j++];
+    for(k = l; k <= r; ++k) std::swap(FUCK[k], FUCKTS[k]);  //FUCK[k] = FUCKTS[k];
+}
+
+void sort(int l, int r, int p) {
+    if (r <= 3) {
+        for (int i = l; i <= r; ++i)
+            for (int j = l + 1; j <= r; ++j)
+                if (cmpQueryTicketResult(FUCK[j], FUCK[i], p)) std::swap(FUCK[i], FUCK[j]);
+    } else mergeSort(l, r, p);
 }
 
 int switchTsToInt(std::string timeStamp) {
@@ -347,7 +375,6 @@ int dealPendingQueue(Trip &curTrip, int addr) {
     for (int i = orderT.sOrdinal; i < orderT.tOrdinal; ++i) maxSeat = std::min(maxSeat, curTrip.restSeat[i]);
 
     if (maxSeat >= orderT.need) {
-        //Account curUser = userList.find(orderT.username).second;
         satisfiyOrder(orderT.username, orderT.timestamp);
         for (int i = orderT.sOrdinal; i < orderT.tOrdinal; ++i) curTrip.restSeat[i] -= orderT.need;
         return orderT.nextAddr;
@@ -358,6 +385,9 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 }
 
 int main() {
+
+    //freopen("testcases/basic_6/1.in", "r", stdin);
+    //freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
     std::string timeStamp, operationName, _key, argument;
@@ -837,7 +867,7 @@ int main() {
                 }
             }
             if (queryTicketNum > 0) {
-                mergeSort(1, queryTicketNum, sortPattern);
+                sort(1, queryTicketNum, sortPattern);
             }
             std::cout << timeStamp << ' ' << queryTicketNum << std::endl;
             for (int i = 1; i <= queryTicketNum; ++i) {
