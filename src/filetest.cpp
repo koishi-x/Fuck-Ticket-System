@@ -34,8 +34,8 @@ public:
 template<class Key = string_t, class T = int>
 class BPT {
     static constexpr int BLOCK_SIZE = 4096;
-    static constexpr int M = 55;
-    static constexpr int L = 59;
+    static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
+    static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
     char filename[20];
     int siz;
     int root;
@@ -67,7 +67,7 @@ class BPT {
     struct bodyNode {
         //restriction: n<=M-1
         int n;
-        dataInfo key[M];
+        Key key[M];
         int addr[M+1];
         bodyNode() : n(0) {
             memset(addr, -1, sizeof addr);
@@ -122,7 +122,7 @@ class BPT {
         io.write(reinterpret_cast<const char*>(&tmp), sizeof(writeType));
     }
 
-    pair<bool, pair<dataInfo, int> > Insert(int &addr, const dataInfo &curData) {
+    pair<bool, pair<Key, int> > Insert(int &addr, const dataInfo &curData) {
         bool nodeType;
         read(nodeType, addr);
         if(!nodeType) { //body node
@@ -131,14 +131,14 @@ class BPT {
 
             int pos = 0;
             for(int i = tmp.n - 1; i >= 0; --i) {
-                if(!(curData < tmp.key[i])) {
+                if(!(curData.key < tmp.key[i])) {
                     pos = i + 1;
                     break;
                 }
             }
-            pair<bool, pair<dataInfo, int> > result = Insert(tmp.addr[pos], curData);
+            pair<bool, pair<Key, int> > result = Insert(tmp.addr[pos], curData);
             if (result.first == false) {
-                return make_pair(false, pair<dataInfo, int>());
+                return make_pair(false, pair<Key, int>());
             } else {
                 for (int i = tmp.n; i > pos; --i) {
                     tmp.key[i] = tmp.key[i - 1];
@@ -150,7 +150,7 @@ class BPT {
 
                 if (tmp.n < M) {
                     write(tmp, addr + sizeof(bool));
-                    return make_pair(false, pair<dataInfo, int>());
+                    return make_pair(false, pair<Key, int>());
                 } else {    //split the body node.
                     int addr2 = newPos();
                     bodyNode tmp2;
@@ -167,7 +167,7 @@ class BPT {
                     write(false, addr2);
                     write(tmp2);
 
-                    return make_pair(true, pair<dataInfo, int>(tmp.key[tmp.n], addr2));
+                    return make_pair(true, pair<Key, int>(tmp.key[tmp.n], addr2));
                 }
             }
         } else {    //leaf node
@@ -187,7 +187,7 @@ class BPT {
             tmp.n++;
             if (tmp.n <= L) {
                 write(tmp, addr + sizeof(bool));
-                return {false, std::pair<dataInfo, int>()};
+                return {false, std::pair<Key, int>()};
             } else {    //split the leaf node.
                 int addr2 = newPos();
                 leafNode tmp2;
@@ -211,14 +211,14 @@ class BPT {
                 write(tmp, addr + sizeof(bool));
                 write(true, addr2);
                 write(tmp2);
-                return make_pair(true, std::pair<dataInfo, int>(tmp2.data[0], addr2));
+                return make_pair(true, std::pair<Key, int>(tmp2.data[0].key, addr2));
             }
         }
     }
 
     //first value is true if delete successfully.
     //second value is true, if the son node size < L/2 and need to be merged
-    pair<bool, bool> Erase(int addr, const dataInfo &curData) {
+    pair<bool, bool> Erase(int addr, const Key &curKey) {
         bool nodeType;
         read(nodeType, addr);
         if (!nodeType) {    //body node
@@ -226,13 +226,13 @@ class BPT {
             read(tmp);
             int pos = 0;
             for(int i = tmp.n - 1; i >= 0; --i) {
-                if(!(curData < tmp.key[i])) {
+                if(!(curKey < tmp.key[i])) {
                     pos = i + 1;
                     break;
                 }
             }
 
-            pair<bool, bool> result = Erase(tmp.addr[pos], curData);
+            pair<bool, bool> result = Erase(tmp.addr[pos], curKey);
             if (!result.second) {
                 return result;
             }
@@ -333,7 +333,7 @@ class BPT {
                             self.data[i] = self.data[i-1];
                         }
                         self.data[0] = neighbor.data[neighbor.n];
-                        tmp.key[pos-1] = self.data[0];
+                        tmp.key[pos-1] = self.data[0].key;
                         write(tmp, addr + sizeof(bool));
                         write(neighbor, tmp.addr[pos-1] + sizeof(bool));
                         write(self, tmp.addr[pos] + sizeof(bool));
@@ -369,8 +369,8 @@ class BPT {
                         for (int i = 0; i < neighbor.n; ++i) {
                             neighbor.data[i] = neighbor.data[i+1];
                         }
-                        tmp.key[pos] = neighbor.data[0];
-                        if(pos > 0) tmp.key[pos-1] = self.data[0];
+                        tmp.key[pos] = neighbor.data[0].key;
+                        if(pos > 0) tmp.key[pos-1] = self.data[0].key;
                         write(tmp, addr + sizeof(bool));
                         write(self, tmp.addr[pos] + sizeof(bool));
                         write(neighbor, tmp.addr[pos+1] + sizeof(bool));
@@ -393,7 +393,7 @@ class BPT {
                             tmp.key[i] = tmp.key[i+1];
                             tmp.addr[i+1] = tmp.addr[i+2];
                         }
-                        if(pos > 0) tmp.key[pos-1] = self.data[0];
+                        if(pos > 0) tmp.key[pos-1] = self.data[0].key;
                         write(tmp, addr + sizeof(bool));
                         write(self, tmp.addr[pos] + sizeof(bool));
                         if (tmp.n < (M - 1) / 2) {
@@ -412,7 +412,7 @@ class BPT {
             read(tmp);
             int pos = -1;
             for (int i = 0; i < tmp.n; ++i) {
-                if (tmp.data[i] == curData) {
+                if (tmp.data[i].key == curKey) {
                     pos = i;
                     break;
                 }
@@ -432,7 +432,7 @@ class BPT {
             }
         }
     }
-    bool FindAndPrint(int addr, const Key &key) {
+    bool FindAndPrint(int addr, const string_t &key) {
         bool nodeType;
         read(nodeType, addr);
         if (!nodeType) {    //body node
@@ -449,7 +449,7 @@ class BPT {
         } else {    //leaf node
             leafNode tmp;
             read(tmp);
-            if (key < tmp.data[0].key) {
+            if (key < tmp.data[0].key.key) {
                 return false;
             }
             /*
@@ -467,19 +467,19 @@ class BPT {
             while (1) {
                 int n = tmp.n;
                 for (int i = 0; i < n; ++i) {
-                    if (tmp.data[i].key == key) {
+                    if (tmp.data[i].key.key == key) {
                         ok = true;
                         printf ("%d ", tmp.data[i].value);
-                    } else if (key < tmp.data[i].key) {
+                    } else if (key < tmp.data[i].key.key) {
                         break;
                     }
                 }
-                if (key < tmp.data[n-1].key || tmp.nextAddr == -1) {
+                if (key < tmp.data[n-1].key.key || tmp.nextAddr == -1) {
                     return ok;
                 }
                 int nextAddr = tmp.nextAddr;
                 read(tmp, nextAddr + sizeof(bool));
-                if (key < tmp.data[0].key) {
+                if (key < tmp.data[0].key.key) {
                     return ok;
                 }
             }
@@ -570,7 +570,7 @@ public:
                 newRootNode.n = 1;
                 newRootNode.addr[0] = addr1;
                 newRootNode.addr[1] = addr2;
-                newRootNode.key[0] = tmp.data[0];
+                newRootNode.key[0] = tmp.data[0].key;
 
                 write(false, root);
                 write(newRootNode);
@@ -580,12 +580,12 @@ public:
             read(rootNode);
             int pos = 0;
             for(int i = rootNode.n - 1; i >= 0; --i) {
-                if(!(curData < rootNode.key[i])) {
+                if(!(curData.key < rootNode.key[i])) {
                     pos = i + 1;
                     break;
                 }
             }
-            pair<bool, pair<dataInfo, int> > result = Insert(rootNode.addr[pos], curData);
+            pair<bool, pair<Key, int> > result = Insert(rootNode.addr[pos], curData);
             //todo:xiu gai yi xia
             if (!result.first) {
                 return;
@@ -637,15 +637,15 @@ public:
         }
     }
 
-    bool erase(const Key &key, const T &value) {   //return true if delete successfully.
-        dataInfo curData(key, value);
+    bool erase(const Key &key) {   //return true if delete successfully.
+    //    dataInfo curData(key, value);
         if (empty()) {
             return false;
         }
         bool rootType;
         read(rootType, root);
         if (!rootType) {    //root is body node.
-            pair<bool, bool> result = Erase(root, curData);
+            pair<bool, bool> result = Erase(root, key);
             if (!result.first) {
                 return false;
             }
@@ -665,7 +665,7 @@ public:
             read(rootNode);
             int pos = -1;
             for (int i = 0; i < rootNode.n; ++i) {
-                if (rootNode.data[i] == curData) {
+                if (rootNode.data[i].key == key) {
                     pos = i;
                     break;
                 }
@@ -684,7 +684,7 @@ public:
         }
     }
 
-    void findAndPrint(const Key &key) {
+    void findAndPrint(const string_t &key) {
         if (empty()) {
             puts("null");
             return;
@@ -704,24 +704,48 @@ public:
 
 };
 
+
+struct intInfo {
+    string_t key;
+    int value;
+    intInfo() {};
+    intInfo(string_t K, int V): key(K), value(V) {};
+    bool operator<(const intInfo &obj) const {
+        if(key != obj.key) return key < obj.key;
+        return value < obj.value;
+    }
+    bool operator==(const intInfo &obj) const {
+        return key == obj.key && value == obj.value;
+    }
+    bool operator!=(const intInfo &obj) const {
+        return key != obj.key || value != obj.value;
+    }
+    intInfo &operator=(const intInfo &obj) {
+        if (this == &obj) return *this;
+        key = obj.key;
+        value = obj.value;
+        return *this;
+    }
+};
+
 int main() {
     int n;
     char op[10];
     string_t index;
     int value;
-    BPT<string_t, int> bpt("kakaa");
+    BPT<intInfo, int> bpt("kakaa");
 
     std::cin >> n;
     while (n--) {
         scanf("%s", op);
         if (op[0] == 'i') { //insert
             scanf("%s%d", index.s, &value);
-            bpt.insert(index, value);
+            bpt.insert(intInfo(index, value), value);
 
         } else if (op[0] == 'd') {  //delete
             scanf("%s%d", index.s, &value);
             //if (bpt.erase(index, value)) puts("delete successfully");
-            bool isErase = bpt.erase(index, value);
+            bool isErase = bpt.erase(intInfo(index, value));
 
         } else {    //find
             scanf("%s", index.s);
