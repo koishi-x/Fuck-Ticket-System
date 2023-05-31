@@ -1,6 +1,5 @@
 #include "BPlusTree.h"
-#include <cassert>
-#define DEBUG
+
 int sumMonth[] = {0, 31,59,90,120,151,181,212,243,273,304,334,365};
 inline int calcDay(int month, int day) {
     return sumMonth[month-1] + day;
