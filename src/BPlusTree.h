@@ -39,23 +39,23 @@ public:
     inline void assign(std::string t) {
         strcpy(s, t.c_str());
     }
-    friend std::istream& operator>>(std::istream &is, string_t &obj);
-    friend std::ostream& operator<<(std::ostream &os, const string_t &obj);
+    friend inline std::istream& operator>>(std::istream &is, string_t &obj);
+    friend inline std::ostream& operator<<(std::ostream &os, const string_t &obj);
 };
 
-std::ostream& operator<<(std::ostream &os, const string_t &obj) {
+inline std::ostream& operator<<(std::ostream &os, const string_t &obj) {
     os << obj.s;
     return os;
 }
 
-std::istream& operator>>(std::istream &is, string_t &obj) {
+inline std::istream& operator>>(std::istream &is, string_t &obj) {
     is >> obj.s;
     return is;
 }
 
 template<class Key, class T>
 class BPT {
-    static constexpr int BLOCK_SIZE = 16384;
+    static constexpr int BLOCK_SIZE = 32768;
     static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
     static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
     char filename[20];

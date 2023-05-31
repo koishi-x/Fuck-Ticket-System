@@ -361,8 +361,8 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 int main() {
 
     //freopen("testcases/pressure_1_easy/2.in", "r", stdin);
-    //freopen("testcases/basic_6/1.in", "r", stdin);
-    //freopen("my.out", "w", stdout);
+    freopen("testcases/basic_6/1.in", "r", stdin);
+    freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
     std::string timeStamp, operationName, _key, argument;
@@ -452,8 +452,24 @@ int main() {
                 }
             }
 
-            bool isLogin = loginList.find(curUsername).first;
 
+            bool ok = false;
+            if (loginList.find(curUsername).first) {
+                auto queryUser = userList.find(username);
+                if (queryUser.first) {
+                    auto curUser = userList.find(curUsername);
+                    if (curUser.second.privilege > queryUser.second.privilege || curUsername == username) {
+                        ok = true;
+                        std::cout << timeStamp << ' ' << queryUser.second.username << ' '
+                                  << queryUser.second.name << ' ' << queryUser.second.mailAddr << ' ' << queryUser.second.privilege << std::endl;
+                    }
+                }
+            }
+            if (!ok) {
+                std::cout << timeStamp << ' ' << -1 << std::endl;
+            }
+            /*
+            bool isLogin = loginList.find(curUsername).first;
             auto curUser = userList.find(curUsername);
             auto queryUser = userList.find(username);
             if (isLogin && queryUser.first && (curUser.second.privilege > queryUser.second.privilege || curUsername == username)) {
@@ -461,7 +477,7 @@ int main() {
                           << queryUser.second.name << ' ' << queryUser.second.mailAddr << ' ' << queryUser.second.privilege << std::endl;
             } else {
                 std::cout << timeStamp << ' ' << -1 << std::endl;
-            }
+            }*/
         }
         else if (operationName == "modify_profile") {
             Account newAcc;
@@ -1037,24 +1053,18 @@ int main() {
                         break;
                 }
             }
-            //auto curUser = userList.find(curUsername);
             bool ok = false;
             if (loginList.find(curUsername).first && releaseList.find(orderA.trainID).first) {
                 Account curUser = userList.find(curUsername).second;
-                //Station startStation = stationList.find(startStationID).second;
-                //Station toStation = stationList.find(toStationID).second;
                 Train curTrain = trainList.find(orderA.trainID).second;
                 if (curTrain.seatNum >= orderA.seat) {
                     int sOrdinal = -1, tOrdinal = -1;
                     int sumTime[100] = {0}, sumPrice[100] = {0};
                     for (int i = 0; i < curTrain.stationNum; ++i) {
-                        if (curTrain.stations[i] == orderA.fromStationID) sOrdinal = i;
-                        if (curTrain.stations[i] == orderA.toStationID) tOrdinal = i;
+                        if (sOrdinal == -1 && curTrain.stations[i] == orderA.fromStationID) sOrdinal = i;
+                        if (tOrdinal == -1 && curTrain.stations[i] == orderA.toStationID) tOrdinal = i;
                         if (i > 0)
-                            sumTime[i] = sumTime[i - 1] + curTrain.travelTimes[i - 1], sumPrice[i] =
-                                                                                               sumPrice[i - 1] +
-                                                                                               curTrain.prices[i -
-                                                                                                               1];
+                            sumTime[i] = sumTime[i - 1] + curTrain.travelTimes[i - 1], sumPrice[i] = sumPrice[i - 1] + curTrain.prices[i - 1];
                         if (i < curTrain.stationNum - 1 && i > 0) sumTime[i] += curTrain.stopoverTimes[i];
                     }
 
