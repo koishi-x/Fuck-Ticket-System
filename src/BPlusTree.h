@@ -32,11 +32,11 @@ public:
         strcpy(s, obj.s);
         return *this;
     }
-    bool empty() {
+    inline bool empty() {
         return strlen(s) == 0;
     }
 
-    void assign(std::string t) {
+    inline void assign(std::string t) {
         strcpy(s, t.c_str());
     }
     friend std::istream& operator>>(std::istream &is, string_t &obj);
@@ -64,9 +64,6 @@ class BPT {
     int last;
     std::fstream io;
 
-    class ZHANWEIFU {
-        bool awa[BLOCK_SIZE];
-    };
     struct dataInfo {
         Key key;
         T value;
@@ -121,7 +118,6 @@ class BPT {
     int newPos() {
         //todo:recycle space
         last += BLOCK_SIZE;
-        write(ZHANWEIFU(), last);
         return last;
     }
 
