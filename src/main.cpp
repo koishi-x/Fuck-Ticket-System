@@ -367,8 +367,8 @@ int dealPendingQueue(Trip &curTrip, int addr) {
 
 int main() {
 
-    freopen("testcases/basic_6/2.in", "r", stdin);
-    freopen("my.out", "w", stdout);
+    //freopen("testcases/basic_6/3.in", "r", stdin);
+    //freopen("my.out", "w", stdout);
     std::ios::sync_with_stdio(false);
     bool isFirstUser = userList.empty();
     std::string timeStamp, operationName, _key, argument;
