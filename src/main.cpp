@@ -296,7 +296,7 @@ void mergeSort(int l, int r, int p) {
 }
 
 void sort(int l, int r, int p) {
-    if (r <= 15) {
+    if (r <= 12) {
         for (int i = r; i >= l; --i)
             for (int j = l; j < i; ++j)
                 if (cmpQueryTicketResult(FUCK[j+1], FUCK[j], p)) std::swap(FUCK[j+1], FUCK[j]);
