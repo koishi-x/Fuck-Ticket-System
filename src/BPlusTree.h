@@ -5,9 +5,8 @@
 #include<cstdio>
 #include<cstring>
 #include<fstream>
-
+#include <cassert>
 using std::pair;
-
 
 class string_t {
 public:
@@ -43,6 +42,9 @@ public:
     friend inline std::ostream& operator<<(std::ostream &os, const string_t &obj);
 };
 
+
+
+
 inline std::ostream& operator<<(std::ostream &os, const string_t &obj) {
     os << obj.s;
     return os;
@@ -55,7 +57,10 @@ inline std::istream& operator>>(std::istream &is, string_t &obj) {
 
 template<class Key, class T>
 class BPT {
-    static constexpr int BLOCK_SIZE = 10000;
+public:
+    class iterator;
+private:
+    static constexpr int BLOCK_SIZE = 16384;
     static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
     static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
     char filename[20];
@@ -102,8 +107,8 @@ class BPT {
     };
     struct leafNode {
         int n;
-        dataInfo data[L+1];
         int preAddr, nextAddr;
+        dataInfo data[L+1];
         leafNode() : n(0), preAddr(-1), nextAddr(-1) {memset(data, 0, sizeof data);}
         leafNode &operator=(const leafNode &obj) {
             if (this == &obj) return *this;
@@ -486,8 +491,6 @@ class BPT {
     pair<bool, T> Find(int addr, const Key &key) {
         bool nodeType;
         read(nodeType, addr);
-        //std::cerr << nodeType << std::endl;
-
         if (!nodeType) {    //body node
             bodyNode tmp;
             read(tmp);
@@ -505,17 +508,6 @@ class BPT {
             if (key < tmp.data[0].key) {
                 return pair<bool, T>(false, T());
             }
-            /*
-            if (key < tmp.data[n-1].key) {
-                bool ok = false;
-                for (int i = 0; i < n; ++i) {
-                    if (tmp.data[i].key == key) {
-                        ok = true;
-                        std::cout<<tmp.data[i].value<<' ';
-                    }
-                }
-                return ok;
-        }*/
             int n = tmp.n;
             for (int i = 0; i < n; ++i) {
                 if (tmp.data[i].key == key) {
@@ -525,6 +517,51 @@ class BPT {
                 }
             }
             return pair<bool, T>(false, T());
+        }
+    }
+    bool Lower_bound(int addr, iterator &it, const Key &key) {
+        bool nodeType;
+        read(nodeType, addr);
+        if (!nodeType) {    //body node
+            bodyNode tmp;
+            read(tmp);
+            int pos = 0;
+            for (int i = tmp.n - 1; i >= 0; --i) {
+                if (!(key < tmp.key[i])) {
+                    pos = i + 1;
+                    break;
+                }
+            }
+            return Lower_bound(tmp.addr[pos], it, key);
+        } else {    //leaf node
+            leafNode tmp;
+            read(tmp);
+            int n = tmp.n;
+            if (tmp.data[n-1].key < key) {
+                addr = tmp.nextAddr;
+                if (addr == -1) return false;
+                read(tmp, addr + sizeof(bool));
+                it.i = 0;
+                it.n = tmp.n;
+                it.ptr = this;
+                it.addr = addr;
+                //read(it.blockInfo, addr, BLOCK_SIZE);
+                io.seekg(addr);
+                io.read(it.blockInfo, BLOCK_SIZE);
+                return true;
+            }
+            for (int i = 0; i < n; --i) {
+                if (!(tmp.data[i].key < key)) {
+                    it.i = i;
+                    it.n = tmp.n;
+                    it.addr = addr;
+                    it.ptr = this;
+                    io.seekg(addr);
+                    io.read(it.blockInfo, BLOCK_SIZE);
+                    return true;
+                }
+            }
+            return false;
         }
     }
 public:
@@ -550,6 +587,7 @@ public:
         //std::cout<<sizeof(bodyNode)<<' '<<sizeof(leafNode)<<'\n';
     }
 
+
     void clear() {
         siz = 0;
         last = 0;
@@ -562,6 +600,60 @@ public:
         io.close();
     }
 
+    class iterator {
+        int addr, i, n;
+        BPT<Key, T> *ptr;
+        char blockInfo[BLOCK_SIZE];
+    public:
+        friend class BPT<Key, T>;
+        iterator() {
+            addr = -1;
+            ptr = nullptr;
+        }
+        iterator(const iterator &obj) {
+            addr = obj.addr;
+            i = obj.i;
+            n = obj.n;
+            ptr = obj.ptr;
+            memcpy(blockInfo, obj.blockInfo, BLOCK_SIZE);
+        }
+
+        bool plusplus() {
+            if (addr == -1) return false;
+            if (++i >= n) {
+                memcpy(reinterpret_cast<char*>(&addr), blockInfo + 9, sizeof(int));
+                if (addr == -1) return false;
+                ptr->io.seekg(addr);
+                ptr->io.read(blockInfo, BLOCK_SIZE);
+                i = 0;
+                memcpy(reinterpret_cast<char*>(&n), blockInfo + 1, sizeof(int));
+            }
+            return true;
+        }
+        bool getFirst(Key &key) {
+            if (addr == -1) return false;
+            memcpy(reinterpret_cast<char*>(&key), blockInfo + 13 + (i - 1) * sizeof(dataInfo), sizeof(Key));
+            return true;
+        }
+
+        bool getSecond(T &value) {
+            //if (addr == -1) return false;
+            assert(addr != -1);
+            memcpy(reinterpret_cast<char*>(&value), blockInfo + 13 + (i - 1) * sizeof(dataInfo) + sizeof(Key), sizeof(T));
+            return true;
+        }
+
+        void modify(const T &value) {
+            memcpy(blockInfo + 13 + (i - 1) * sizeof(dataInfo) + sizeof(Key), reinterpret_cast<const char*>(&value), sizeof(T));
+            ptr->io.seekp(addr);
+            ptr->io.write(blockInfo, BLOCK_SIZE);
+        }
+    };
+
+    bool lower_bound(iterator &it, const Key &key) {
+        if (empty()) return false;
+        return Lower_bound(root, it, key);
+    }
 
     void insert(const Key &key, const T &value) {
         dataInfo curData(key, value);
