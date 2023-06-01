@@ -16,11 +16,11 @@ inline int calcMinute(int month, int day, int hour, int minute) {
 inline void printDate(int date) {   //print as "xx-xx"
     for (int i = 12; i >= 1; --i) {
         if (date > sumMonth[i-1]) {
-            if (i < 10) std::cout << 0;
-            std::cout << i << '-';
+            if (i < 10) putchar('0');
+            printf("%d-", i);
             date -= sumMonth[i-1];
-            if (date < 10) std::cout << 0;
-            std::cout << date;
+            if (date < 10) putchar('0');
+            printf("%d", date);
             break;
         }
     }
@@ -32,23 +32,22 @@ inline int getDateByMinute(int minute) {
 
 inline void printMinute(int minute) {   //print as "xx:xx"
     int hh = minute / 60, mm = minute % 60;
-    if (hh < 10) std::cout << 0;
-    std::cout << hh << ':';
-    if (mm < 10) std::cout << 0;
-    std::cout << mm;
+    if (hh < 10) putchar('0');
+    printf("%d:", hh);
+    if (mm < 10) putchar('0');
+    printf("%d", mm);
 }
 
 inline void printDateAndMinute(int minute) {    //print as "xx-xx xx:xx"
     int date = minute / 1440 + 1;
     minute %= 1440;
     printDate(date);
-    std::cout << ' ';
+    putchar(' ');
     printMinute(minute);
 }
 
 template<class T>
 class wrapFstream {
-    //char filename[10];
     std::fstream io;
     int last{0};
 public:
@@ -303,7 +302,7 @@ void sort(int l, int r, int p) {
     } else mergeSort(l, r, p);
 }
 
-int switchTsToInt(std::string timeStamp) {
+int switchTsToInt(char timeStamp[]) {
     int ts = 0;
     for (int i = 1; timeStamp[i] != ']'; ++i) ts = ts * 10 + timeStamp[i] - '0';
     return ts;
@@ -364,34 +363,36 @@ int dealPendingQueue(Trip &curTrip, int addr) {
     return -2;
 }
 
+char _key[50], operationName[20];
+int timeStamp;
+char tmpStr[10010];
 int main() {
 
-    //freopen("testcases/basic_4/2.in", "r", stdin);
-    //freopen("my.out", "w", stdout);
-    std::ios::sync_with_stdio(false);
+    freopen("testcases/basic_4/1.in", "r", stdin);
+    freopen("my.out", "w", stdout);
     bool isFirstUser = userList.empty();
-    std::string timeStamp, operationName, _key, argument;
+    //std::string timeStamp, operationName, _key;
 
-    std::cin >> _key;
+    scanf("%s", _key);
 
     while (true) {
 
-        timeStamp = _key;
-        std::cin >> operationName;
+        timeStamp = switchTsToInt(_key);
+        scanf("%s", operationName);
 
-        if (operationName == "add_user") {
+        if (!strcmp(operationName, "add_user")) {
             Account newAcc;
             string_t curUsername;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'c': std::cin >> curUsername; break;
-                    case 'u': std::cin >> newAcc.username; break;
-                    case 'p': std::cin >> newAcc.password; break;
-                    case 'n': std::cin >> newAcc.name; break;
-                    case 'm': std::cin >> newAcc.mailAddr; break;
-                    case 'g': std::cin >> newAcc.privilege; break;
+                    case 'c': scanf("%s", curUsername.s); break;
+                    case 'u': scanf("%s", newAcc.username.s); break;
+                    case 'p': scanf("%s", newAcc.password.s); break;
+                    case 'n': scanf("%s", newAcc.name.s); break;
+                    case 'm': scanf("%s", newAcc.mailAddr.s); break;
+                    case 'g': scanf("%d", &newAcc.privilege); break;
                 }
             }
 
@@ -399,61 +400,61 @@ int main() {
                 newAcc.privilege = 10;
                 userList.insert(newAcc.username, newAcc);
                 isFirstUser = false;
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
                 bool isLogin = loginList.find(curUsername).first;
                 auto curUser = userList.find(curUsername).second;
                 //if (curUser.first || curUser.second.privilege > newAcc.privilege) {
                 if (isLogin && curUser.privilege > newAcc.privilege) {
                     userList.insert(newAcc.username, newAcc);
-                    std::cout << timeStamp << ' ' << 0 << std::endl;
+                    printf("[%d] 0\n", timeStamp);
                 } else {
-                    std::cout << timeStamp << ' ' << -1 << std::endl;
+                    printf("[%d] -1\n", timeStamp);
                 }
             }
         }
-        else if (operationName == "login") {
+        else if (!strcmp(operationName, "login")) {
             string_t username, password;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> username; break;
-                    case 'p': std::cin >> password; break;
+                    case 'u': scanf("%s", username.s); break;
+                    case 'p': scanf("%s", password.s); break;
                 }
             }
             auto curUser = userList.find(username);
             if (curUser.first && curUser.second.password == password && !loginList.find(username).first) {
                 loginList.insert(username, true);
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "logout") {
+        else if (!strcmp(operationName, "logout")) {
             string_t username;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> username; break;
+                    case 'u': scanf("%s", username.s); break;
                 }
             }
 
             if (loginList.erase(username)) {
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "query_profile") {
+        else if (!strcmp(operationName, "query_profile")) {
             string_t curUsername, username;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> username; break;
-                    case 'c': std::cin >> curUsername; break;
+                    case 'u': scanf("%s", username.s); break;
+                    case 'c': scanf("%s", curUsername.s); break;
                 }
             }
 
@@ -465,38 +466,27 @@ int main() {
                     auto curUser = userList.find(curUsername);
                     if (curUser.second.privilege > queryUser.second.privilege || curUsername == username) {
                         ok = true;
-                        std::cout << timeStamp << ' ' << queryUser.second.username << ' '
-                                  << queryUser.second.name << ' ' << queryUser.second.mailAddr << ' ' << queryUser.second.privilege << std::endl;
+                        printf("[%d] %s %s %s %d\n", timeStamp, queryUser.second.username.s, queryUser.second.name.s, queryUser.second.mailAddr.s, queryUser.second.privilege);
                     }
                 }
             }
             if (!ok) {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
-            /*
-            bool isLogin = loginList.find(curUsername).first;
-            auto curUser = userList.find(curUsername);
-            auto queryUser = userList.find(username);
-            if (isLogin && queryUser.first && (curUser.second.privilege > queryUser.second.privilege || curUsername == username)) {
-                std::cout << timeStamp << ' ' << queryUser.second.username << ' '
-                          << queryUser.second.name << ' ' << queryUser.second.mailAddr << ' ' << queryUser.second.privilege << std::endl;
-            } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
-            }*/
         }
-        else if (operationName == "modify_profile") {
+        else if (!strcmp(operationName, "modify_profile")) {
             Account newAcc;
             string_t curUsername;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'c': std::cin >> curUsername; break;
-                    case 'u': std::cin >> newAcc.username; break;
-                    case 'p': std::cin >> newAcc.password; break;
-                    case 'n': std::cin >> newAcc.name; break;
-                    case 'm': std::cin >> newAcc.mailAddr; break;
-                    case 'g': std::cin >> newAcc.privilege; break;
+                    case 'c': scanf("%s", curUsername.s); break;
+                    case 'u': scanf("%s", newAcc.username.s); break;
+                    case 'p': scanf("%s", newAcc.password.s); break;
+                    case 'n': scanf("%s", newAcc.name.s); break;
+                    case 'm': scanf("%s", newAcc.mailAddr.s); break;
+                    case 'g': scanf("%d", &newAcc.privilege); break;
                 }
             }
             bool isLogin = loginList.find(curUsername).first;
@@ -518,85 +508,89 @@ int main() {
                 }
 
                 userList.modify(modifyUser.second.username, modifyUser.second);
-                std::cout << timeStamp << ' ' << modifyUser.second.username << ' '
-                          << modifyUser.second.name << ' ' << modifyUser.second.mailAddr << ' ' << modifyUser.second.privilege << std::endl;
+                printf("[%d] %s %s %s %d\n", timeStamp, modifyUser.second.username.s, modifyUser.second.name.s, modifyUser.second.mailAddr.s, modifyUser.second.privilege);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
 
         }
-        else if (operationName == "add_train") {
+        else if (!strcmp(operationName, "add_train")) {
 
             Train newTrain;
             while (true) {
-                std::string tmp;
+                //std::string tmp;
                 int last;
 
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'i': std::cin >> newTrain.trainID; break;
-                    case 'n': std::cin >> newTrain.stationNum; break;
-                    case 'm': std::cin >> newTrain.seatNum; break;
+                    case 'i': scanf("%s", newTrain.trainID.s); break;
+                    case 'n': scanf("%d", &newTrain.stationNum); break;
+                    case 'm': scanf("%d", &newTrain.seatNum); break;
                     case 's':
-                        std::cin >> tmp;
+                        scanf("%s", tmpStr);
                         last = 0;
                         newTrain.stationNum = 0;
-                        for (int i = 0; tmp[i]; ++i) {
-                            if (tmp[i] == '|') {
-                                newTrain.stations[newTrain.stationNum++].assign(tmp.substr(last, i - last));
-                                //++newTrain.stationNum;
-                                last = i + 1;
+                        for (int i = 0, I = strlen(tmpStr), j = 0; i <= I; ++i) {
+                            if (tmpStr[i] == '|' || tmpStr[i] == 0) {
+                                //newTrain.stations[newTrain.stationNum++].assign(tmp.substr(last, i - last));
+                                newTrain.stations[newTrain.stationNum++].s[j] = 0;
+                                j = 0;
+                            } else {
+                                newTrain.stations[newTrain.stationNum].s[j] = tmpStr[i];
+                                ++j;
                             }
                         }
-                        newTrain.stations[newTrain.stationNum++].assign(tmp.substr(last));
+                        //newTrain.stations[newTrain.stationNum++].assign(tmp.substr(last));
+                        //newTrain.stations[newTrain.stationNum++].s[j] = 0;
                         break;
 
                     case 'p':
-                        std::cin >> tmp;
+                        scanf("%s", tmpStr);
                         last = 0;
                         newTrain.stationNum = 0;
-                        for (int i = 0; tmp[i]; ++i) {
-                            if (tmp[i] == '|') {
+                        for (int i = 0, I = strlen(tmpStr); i < I; ++i) {
+                            if (tmpStr[i] == '|') {
                                 newTrain.prices[newTrain.stationNum++] = last;
                                 last = 0;
                             } else {
-                                last = last * 10 + tmp[i] - '0';
+                                last = last * 10 + tmpStr[i] - '0';
                             }
                         }
                         newTrain.prices[newTrain.stationNum++] = last;
                         ++newTrain.stationNum;
                         break;
+
                     case 'x':
-                        std::cin >> tmp;
-                        newTrain.startTime = calcMinute((tmp[0] - '0') * 10 + (tmp[1] - '0'), (tmp[3] - '0') * 10 + (tmp[4] - '0'));
+                        scanf("%s", tmpStr);
+                        newTrain.startTime = calcMinute((tmpStr[0] - '0') * 10 + (tmpStr[1] - '0'), (tmpStr[3] - '0') * 10 + (tmpStr[4] - '0'));
                         break;
                     case 't':
-                        std::cin >> tmp;
+                        scanf("%s", tmpStr);
                         last = 0;
                         newTrain.stationNum = 0;
-                        for (int i = 0; tmp[i]; ++i) {
-                            if (tmp[i] == '|') {
+                        for (int i = 0, I = strlen(tmpStr); i < I; ++i) {
+                            if (tmpStr[i] == '|') {
                                 newTrain.travelTimes[newTrain.stationNum++] = last;
                                 last = 0;
                             } else {
-                                last = last * 10 + tmp[i] - '0';
+                                last = last * 10 + tmpStr[i] - '0';
                             }
                         }
                         newTrain.travelTimes[newTrain.stationNum++] = last;
                         ++newTrain.stationNum;
                         break;
                     case 'o':
-                        std::cin >> tmp;
-                        if (tmp[0] != '_') {
+                        scanf("%s", tmpStr);
+                        if (tmpStr[0] != '_') {
                             newTrain.stationNum = 1;
                             last = 0;
-                            for (int i = 0; tmp[i]; ++i) {
-                                if (tmp[i] == '|') {
+                            for (int i = 0, I = strlen(tmpStr); i < I; ++i) {
+                                if (tmpStr[i] == '|') {
                                     newTrain.stopoverTimes[newTrain.stationNum++] = last;
                                     last = 0;
                                 } else {
-                                    last = last * 10 + tmp[i] - '0';
+                                    last = last * 10 + tmpStr[i] - '0';
                                 }
                             }
                             newTrain.stopoverTimes[newTrain.stationNum++] = last;
@@ -606,44 +600,44 @@ int main() {
                         }
                         break;
                     case 'd':
-                        std::cin >> tmp;
-                        newTrain.saleDateBegin = calcDay((tmp[0] - '0') * 10 + (tmp[1] - '0'), (tmp[3] - '0') * 10 + (tmp[4] - '0'));
-                        newTrain.saleDateEnd = calcDay((tmp[6] - '0') * 10 + (tmp[7] - '0'), (tmp[9] - '0') * 10 + (tmp[10] - '0'));
+                        scanf("%s", tmpStr);
+                        newTrain.saleDateBegin = calcDay((tmpStr[0] - '0') * 10 + (tmpStr[1] - '0'), (tmpStr[3] - '0') * 10 + (tmpStr[4] - '0'));
+                        newTrain.saleDateEnd = calcDay((tmpStr[6] - '0') * 10 + (tmpStr[7] - '0'), (tmpStr[9] - '0') * 10 + (tmpStr[10] - '0'));
                         break;
-                    case 'y': std::cin >> newTrain.type; break;
+                    case 'y': scanf("%s", tmpStr); newTrain.type = tmpStr[0]; break;
                 }
 
             }
             if (!trainList.find(newTrain.trainID).first) {
                 trainList.insert(newTrain.trainID, newTrain);
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "delete_train") {
+        else if (!strcmp(operationName, "delete_train")) {
             string_t trainID;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'i': std::cin >> trainID; break;
+                    case 'i': scanf("%s", trainID.s); break;
                 }
             }
             if (trainList.find(trainID).first && !releaseList.find(trainID).first) {
                 trainList.erase(trainID);
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "release_train") {
+        else if (!strcmp(operationName, "release_train")) {
             string_t trainID;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'i': std::cin >> trainID; break;
+                    case 'i': scanf("%s", trainID.s); break;
                 }
             }
             auto curTrain = trainList.find(trainID);
@@ -722,22 +716,22 @@ int main() {
                         else stationList.insert(stationID, curStation.second);
                     }
                 }
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "query_train") {
+        else if (!strcmp(operationName, "query_train")) {
             int date;
             string_t trainID;
-            std::string dateString;
+            char dateString[6];
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'i': std::cin >> trainID; break;
+                    case 'i': scanf("%s", trainID.s); break;
                     case 'd':
-                        std::cin >> dateString;
+                        scanf("%s", dateString);
                         date = calcDay((dateString[0] - '0') * 10 + (dateString[1] - '0'), (dateString[3] - '0') * 10 + (dateString[4] - '0'));
                         break;
                 }
@@ -745,60 +739,70 @@ int main() {
 
             auto curTrain = trainList.find(trainID);
             if (curTrain.first && date >= curTrain.second.saleDateBegin && date <= curTrain.second.saleDateEnd) {
-                std::cout << timeStamp << ' ' << trainID << ' ' << curTrain.second.type << std::endl;
-
+                //std::cout << timeStamp << ' ' << trainID << ' ' << curTrain.second.type << std::endl;
+                printf("[%d] %s %c\n", timeStamp, trainID.s, curTrain.second.type);
                 int stationNum = curTrain.second.stationNum;
                 bool isRelease = releaseList.find(trainID).first;
                 Trip curTrip(stationNum, curTrain.second.seatNum);
                 if (isRelease) {
                     curTrip = tripList.find(pair<string_t, int>(trainID, date)).second;
                 }
-                std::cout << curTrain.second.stations[0] << " xx-xx xx:xx -> ";
+                //std::cout << curTrain.second.stations[0] << " xx-xx xx:xx -> ";
+                printf("%s xx-xx xx:xx -> ", curTrain.second.stations[0].s);
                 printDate(date);
-                std::cout << ' ';
+                putchar(' ');
                 printMinute(curTrain.second.startTime);
-                std::cout << ' ' << 0 << ' ' << curTrip.restSeat[0] << std::endl;
+                //std::cout << ' ' << 0 << ' ' << curTrip.restSeat[0] << std::endl;
+                printf(" 0 %d\n", curTrip.restSeat[0]);
                 int curTime = (date - 1) * 1440 + curTrain.second.startTime, curPrice = 0;
 
                 for (int i = 1; i < stationNum - 1; ++i) {
-                    std::cout << curTrain.second.stations[i] << ' ';
+                    //std::cout << curTrain.second.stations[i] << ' ';
+                    printf("%s ", curTrain.second.stations[i].s);
                     curTime += curTrain.second.travelTimes[i-1];
                     printDateAndMinute(curTime);
-                    std::cout << " -> ";
+                    printf(" -> ");
                     curTime += curTrain.second.stopoverTimes[i];
                     printDateAndMinute(curTime);
                     curPrice += curTrain.second.prices[i-1];
-                    std::cout << ' ' << curPrice << ' ' << curTrip.restSeat[i] << std::endl;
+                    //std::cout << ' ' << curPrice << ' ' << curTrip.restSeat[i] << std::endl;
+                    printf(" %d %d\n", curPrice, curTrip.restSeat[i]);
                 }
 
-                std::cout << curTrain.second.stations[stationNum - 1] << ' ';
+                //std::cout << curTrain.second.stations[stationNum - 1] << ' ';
+                printf("%s ", curTrain.second.stations[stationNum - 1].s);
                 curTime += curTrain.second.travelTimes[stationNum - 2];
                 curPrice += curTrain.second.prices[stationNum - 2];
                 printDateAndMinute(curTime);
-                std::cout << " -> xx-xx xx:xx " << curPrice << " x" << std::endl;
+                //std::cout << " -> xx-xx xx:xx " << curPrice << " x" << std::endl;
+                printf(" -> xx-xx xx:xx %d x\n", curPrice);
             } else {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                //std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "query_ticket") {
+        else if (!strcmp(operationName, "query_ticket")) {
 
             string_t startStationID, toStationID;
-            std::string dateString, tmp;
+            char dateString[6];
             int date;
             int sortPattern = 0;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 's': std::cin >> startStationID; break;
-                    case 't': std::cin >> toStationID; break;
+                    case 's': scanf("%s", startStationID.s); break;
+                    case 't': scanf("%s", toStationID.s); break;
                     case 'd':
-                        std::cin >> dateString;
+                        //std::cin >> dateString;
+                        scanf("%s", dateString);
                         date = calcDay((dateString[0] - '0') * 10 + (dateString[1] - '0'), (dateString[3] - '0') * 10 + (dateString[4] - '0'));
                         break;
                     case 'p':
-                        std::cin >> tmp;
-                        if (tmp == "time") sortPattern = 0;
+                        //std::cin >> tmp;
+                        scanf("%s", tmpStr);
+                        //if (tmp == "time") sortPattern = 0;
+                        if (!strcmp(tmpStr, "time")) sortPattern = 0;
                         else sortPattern = 1;
                 }
             }
@@ -849,33 +853,39 @@ int main() {
             if (queryTicketNum > 0) {
                 sort(1, queryTicketNum, sortPattern);
             }
-            std::cout << timeStamp << ' ' << queryTicketNum << std::endl;
+            printf("[%d] %d\n", timeStamp, queryTicketNum);
             for (int i = 1; i <= queryTicketNum; ++i) {
-                std::cout << FUCK[i].trainID << ' ' << startStationID << ' ' << dateString << ' ';
+                //std::cout << FUCK[i].trainID << ' ' << startStationID << ' ' << dateString << ' ';
+                printf("%s %s %s ", FUCK[i].trainID.s, startStationID.s, dateString);
                 printMinute(FUCK[i].leaveTime);
-                std::cout << " -> " << toStationID << ' ';
+                //std::cout << " -> " << toStationID << ' ';
+                printf(" -> %s ", toStationID.s);
                 printDateAndMinute((date - 1) * 1440 + FUCK[i].leaveTime + FUCK[i].takeTime);
-                std::cout << ' ' << FUCK[i].price << ' ' << FUCK[i].seat << std::endl;
+                //std::cout << ' ' << FUCK[i].price << ' ' << FUCK[i].seat << std::endl;
+                printf(" %d %d\n", FUCK[i].price, FUCK[i].seat);
             }
         }
-        else if (operationName == "query_transfer") {
+        else if (!strcmp(operationName, "query_transfer")) {
             string_t startStationID, toStationID;
-            std::string dateString, tmp;
+            char dateString[6];
             int date;
             int sortPattern = 0;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 's': std::cin >> startStationID; break;
-                    case 't': std::cin >> toStationID; break;
+                    case 's': scanf("%s", startStationID.s); break;
+                    case 't': scanf("%s", toStationID.s); break;
                     case 'd':
-                        std::cin >> dateString;
+                        //std::cin >> dateString;
+                        scanf("%s", dateString);
                         date = calcDay((dateString[0] - '0') * 10 + (dateString[1] - '0'), (dateString[3] - '0') * 10 + (dateString[4] - '0'));
                         break;
                     case 'p':
-                        std::cin >> tmp;
-                        if (tmp == "time") sortPattern = 0;
+                        //std::cin >> tmp;
+                        scanf("%s", tmpStr);
+                        //if (tmp == "time") sortPattern = 0;
+                        if (!strcmp(tmpStr, "time")) sortPattern = 0;
                         else sortPattern = 1;
                 }
             }
@@ -1012,49 +1022,58 @@ int main() {
             }
 
             if (ok) {
-                std::cout << timeStamp << ' ';
-                std::cout << res.trainID1 << ' ' << startStationID << ' ';
+                //std::cout << timeStamp << ' ';
+                //std::cout << res.trainID1 << ' ' << startStationID << ' ';
+                printf("[%d] %s %s ", timeStamp, res.trainID1.s, startStationID.s);
                 printDate(date);
-                std::cout << ' ';
+                putchar(' ');
                 printMinute(res.startTime1);
-                std::cout << " -> " << res.transferStation << ' ';
+                //std::cout << " -> " << res.transferStation << ' ';
+                printf(" -> %s ", res.transferStation.s);
                 printDateAndMinute(res.arriveTime1);
-                std::cout << ' ' << res.price1 << ' ' << res.seat1 << std::endl;
+                //std::cout << ' ' << res.price1 << ' ' << res.seat1 << std::endl;
+                printf(" %d %d\n", res.price1, res.seat1);
+                //std::cout << res.trainID2 << ' ' << res.transferStation << ' ';
+                printf("%s %s ", res.trainID2.s, res.transferStation.s);
 
-                std::cout << res.trainID2 << ' ' << res.transferStation << ' ';
                 printDateAndMinute(res.startTime2);
-                std::cout << " -> " << toStationID << ' ';
+                //std::cout << " -> " << toStationID << ' ';
+                printf(" -> %s ", toStationID.s);
                 printDateAndMinute(res.arriveTime2);
-                std::cout << ' ' << res.price2 << ' ' << res.seat2 << std::endl;
+                //std::cout << ' ' << res.price2 << ' ' << res.seat2 << std::endl;
+                printf(" %d %d\n", res.price2, res.seat2);
             } else {
-                std::cout << timeStamp << ' ' << 0 << std::endl;
+                //std::cout << timeStamp << ' ' << 0 << std::endl;
+                printf("[%d] 0\n", timeStamp);
             }
         }
-        else if (operationName == "buy_ticket") {
+        else if (!strcmp(operationName, "buy_ticket")) {
 
             string_t curUsername;
-            std::string dateString;
+            //std::string dateString;
+            char dateString[6];
             int date;
             bool isCandidate = false;
-            std::string tmp;
             orderOnAccount orderA;
-            orderA.timeStamp = switchTsToInt(timeStamp);
+            orderA.timeStamp = timeStamp;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> curUsername; break;
-                    case 'i': std::cin >> orderA.trainID; break;
+                    case 'u': scanf("%s", curUsername.s); break;
+                    case 'i': scanf("%s", orderA.trainID.s); break;
                     case 'd':
-                        std::cin >> dateString;
+                        scanf("%s", dateString);
                         date = calcDay((dateString[0] - '0') * 10 + (dateString[1] - '0'), (dateString[3] - '0') * 10 + (dateString[4] - '0'));
                         break;
-                    case 'n': std::cin >> orderA.seat; break;
-                    case 'f': std::cin >> orderA.fromStationID; break;
-                    case 't': std::cin >> orderA.toStationID; break;
+                    case 'n': scanf("%d", &orderA.seat); break;
+                    case 'f': scanf("%s", orderA.fromStationID.s); break;
+
+                    case 't': scanf("%s", orderA.toStationID.s); break;
                     case 'q':
-                        std::cin >> tmp;
-                        if (tmp == "true") isCandidate = true;
+                        //std::cin >> tmp;
+                        scanf("%s", tmpStr);
+                        if (!strcmp(tmpStr, "true")) isCandidate = true;
                         break;
                 }
             }
@@ -1114,7 +1133,8 @@ int main() {
                             userList.modify(curUsername, curUser);
 
                             ok = true;
-                            std::cout << timeStamp << ' ' << (long long) orderA.seat * orderA.price << std::endl;
+                            //std::cout << timeStamp << ' ' << (long long) orderA.seat * orderA.price << std::endl;
+                            printf("[%d] %lld\n", timeStamp, (long long)orderA.seat * orderA.price);
                         } else if (isCandidate) {
                             orderA.status = orderOnAccount::pending;
 
@@ -1135,22 +1155,22 @@ int main() {
                             tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
 
                             ok = true;
-                            std::cout << timeStamp << " queue" << std::endl;
+                            printf("[%d] queue\n", timeStamp);
                         }
                     }
                 }
             }
             if (!ok) {
-                std::cout << timeStamp << " -1" << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "query_order") {
+        else if (!strcmp(operationName, "query_order")) {
             string_t curUsername;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> curUsername; break;
+                    case 'u': scanf("%s", curUsername.s); break;
                 }
             }
             if (loginList.find(curUsername).first) {
@@ -1162,35 +1182,38 @@ int main() {
                     ioAccount.read(orderA, ptr);
                     ptr = orderA.nextAddr;
                 }
-                std::cout << timeStamp << ' ' << num << std::endl;
+                printf("[%d] %d\n", timeStamp, num);
                 ptr = curUser.head;
                 while (ptr != -1) {
                     ioAccount.read(orderA, ptr);
                     switch (orderA.status) {
-                        case orderOnAccount::success: std::cout << "[success] "; break;
-                        case orderOnAccount::refunded: std::cout << "[refunded] "; break;
-                        case orderOnAccount::pending: std::cout << "[pending] "; break;
+                        case orderOnAccount::success: printf("[success] "); break;
+                        case orderOnAccount::refunded: printf("[refunded] "); break;
+                        case orderOnAccount::pending: printf("[pending] "); break;
                     }
-                    std::cout << orderA.trainID << ' ' << orderA.fromStationID << ' ';
+                    //std::cout << orderA.trainID << ' ' << orderA.fromStationID << ' ';
+                    printf("%s %s ", orderA.trainID.s, orderA.fromStationID.s);
                     printDateAndMinute(orderA.leaveTime);
-                    std::cout << " -> " << orderA.toStationID << ' ';
+                    //std::cout << " -> " << orderA.toStationID << ' ';
+                    printf(" -> %s ", orderA.toStationID.s);
                     printDateAndMinute(orderA.arriveTime);
-                    std::cout << ' ' << orderA.price << ' ' << orderA.seat << std::endl;
+                    //std::cout << ' ' << orderA.price << ' ' << orderA.seat << std::endl;
+                    printf(" %d %d\n", orderA.price, orderA.seat);
                     ptr = orderA.nextAddr;
                 }
             } else {
-                std::cout << timeStamp << " -1" << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "refund_ticket") {
+        else if (!strcmp(operationName, "refund_ticket")) {
             string_t curUsername;
             int num = 1;
             while (true) {
-                std::cin >> _key;
+                scanf("%s", _key);
                 if (_key[0] == '[') break;
                 switch (_key[1]) {
-                    case 'u': std::cin >> curUsername; break;
-                    case 'n': std::cin >> num; break;
+                    case 'u': scanf("%s", curUsername.s); break;
+                    case 'n': scanf("%d", &num); break;
                 }
             }
             bool ok = false;
@@ -1219,7 +1242,7 @@ int main() {
                             tripList.modify(pair<string_t, int>(curOrderA.trainID, curOrderA.startDate), curTrip);
 
                             ok = true;
-                            std::cout << timeStamp << ' ' << 0 << std::endl;
+                            printf("[%d] 0\n", timeStamp);
                         } else if (curOrderA.status == orderOnAccount::pending) {
                             curOrderA.status = orderOnAccount::refunded;
                             ioAccount.write(curOrderA, ptr);
@@ -1249,16 +1272,16 @@ int main() {
                             }
 
                             ok = true;
-                            std::cout << timeStamp << ' ' << 0 << std::endl;
+                            printf("[%d] 0\n", timeStamp);
                         }
                     }
                 }
             }
             if (!ok) {
-                std::cout << timeStamp << ' ' << -1 << std::endl;
+                printf("[%d] -1\n", timeStamp);
             }
         }
-        else if (operationName == "clean") {
+        else if (!strcmp(operationName, "clean")) {
             userList.clear();
             loginList.clear();
             trainList.clear();
@@ -1270,12 +1293,12 @@ int main() {
             ioTrip.clear();
             stationTfList.clear();
             ioAccount.clear();
-            std::cout << timeStamp << ' ' << 0 << std::endl;
-            std::cin >> _key;
+            printf("[%d] 0\n", timeStamp);
+            scanf("%s", _key);
         }
-        else if (operationName == "exit") {
+        else if (!strcmp(operationName, "exit")) {
             loginList.clear();
-            std::cout << timeStamp << ' ' << "bye" << std::endl;
+            printf("[%d] bye\n", timeStamp);
             return 0;
         }
     }
