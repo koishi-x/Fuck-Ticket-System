@@ -368,8 +368,8 @@ int timeStamp;
 char tmpStr[10010];
 int main() {
 
-    freopen("testcases/basic_4/1.in", "r", stdin);
-    freopen("my.out", "w", stdout);
+    //freopen("testcases/basic_4/1.in", "r", stdin);
+    //freopen("my.out", "w", stdout);
     bool isFirstUser = userList.empty();
     //std::string timeStamp, operationName, _key;
 
