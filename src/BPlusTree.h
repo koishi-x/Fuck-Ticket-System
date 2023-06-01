@@ -604,8 +604,8 @@ public:
         int addr, i, n;
         BPT<Key, T> *ptr;
         char blockInfo[BLOCK_SIZE];
-    public:
         friend class BPT<Key, T>;
+    public:
         iterator() {
             addr = -1;
             ptr = nullptr;
@@ -637,8 +637,8 @@ public:
         }
 
         bool getSecond(T &value) {
-            //if (addr == -1) return false;
-            assert(addr != -1);
+            if (addr == -1) return false;
+            //assert(addr != -1);
             memcpy(reinterpret_cast<char*>(&value), blockInfo + 13 + (i - 1) * sizeof(dataInfo) + sizeof(Key), sizeof(T));
             return true;
         }

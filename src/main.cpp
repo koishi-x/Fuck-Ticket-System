@@ -1,9 +1,4 @@
 #include "BPlusTree.h"
-//#define DISABLE_buy_ticket
-//#define DISABLE_query_profile
-#define DISABLE_query_ticket
-#define DISABLE_query_transfer
-#define DISABLE_query_order
 
 int sumMonth[] = {0, 31,59,90,120,151,181,212,243,273,304,334,365};
 inline int calcDay(int month, int day) {
@@ -17,6 +12,7 @@ inline int calcMinute(int hour, int minute) {
 inline int calcMinute(int month, int day, int hour, int minute) {
     return (calcDay(month, day) - 1) * 24 * 60 + calcMinute(hour, minute);
 }
+
 
 inline void printDate(int date) {   //print as "xx-xx"
     for (int i = 12; i >= 1; --i) {
@@ -171,13 +167,14 @@ public:
     //todo: add some parameter
     int stationNum{0};
     int restSeat[MAX_STATION_NUM-1]{0};
-    //int head{-1};
+    int head{-1};
     bool operator<(const Trip &obj) const {
         return 0;   //no meaning
     }
 
-    Trip() {}
-    explicit Trip(int SN, int seat) {
+    Trip(): head(-1){}
+    Trip(int SN, int seat) {
+        head = -1;
         stationNum = SN;
         for (int i = 0; i < stationNum - 1; ++i) {
             restSeat[i] = seat;
@@ -185,6 +182,7 @@ public:
     }
     Trip(const Trip &obj) {
         stationNum = obj.stationNum;
+        head = obj.head;
         for (int i = 0; i < stationNum - 1; ++i) restSeat[i] = obj.restSeat[i];
     }
 }tmpTrip[100];  //0-base
@@ -195,11 +193,11 @@ struct orderOnTrip {
     int need{0};
     int sOrdinal{0};
     int tOrdinal{0};
-    //int nextAddr{-1};
     orderOnTrip() {}
-    bool operator<(const orderOnTrip &obj) const{
-        return false;   //no meaning
+    bool operator<(const orderOnTrip &obj) const {
+        return false;
     }
+
 };
 
 class Account {
@@ -209,7 +207,6 @@ public:
     string_t name;
     string_t mailAddr;
     int privilege{-1};
-    //int head{-1};
     int orderNum{0};
     Account(): privilege(-1) {}
     bool operator<(const Account &obj) const {
@@ -229,9 +226,8 @@ struct orderOnAccount {
     int seat{0};
     int timeStamp{0};
     enum{success, pending, refunded} status{success};
-    //int nextAddr{-1};
     bool operator<(const orderOnAccount &obj) const {
-        return false;   //no meaning
+        return false;
     }
 };
 
@@ -303,31 +299,12 @@ void mergeSort(int l, int r, int p) {
     for(k = l; k <= r; ++k) std::swap(FUCK[k], FUCKTS[k]);  //FUCK[k] = FUCKTS[k];
 }
 
-void quickSort(int l, int r, int p) {
-    if (l >= r) return;
-    int i = l, j = r;
-    auto x = FUCK[l + (998244353 % (r - l + 1))];
-    while (i <= j) {
-        while (i <= j && cmpQueryTicketResult(FUCK[i], x, p)) ++i;
-        while (i <= j && cmpQueryTicketResult(x, FUCK[j], p)) --j;
-        if (i > j) break;
-        std::swap(FUCK[i], FUCK[j]);
-        ++i;
-        --j;
-    }
-    quickSort(l, j, p);
-    quickSort(i, r, p);
-}
-
 void sort(int l, int r, int p) {
-
-    if (r <= 5) {
+    if (r <= 12) {
         for (int i = r; i >= l; --i)
             for (int j = l; j < i; ++j)
                 if (cmpQueryTicketResult(FUCK[j+1], FUCK[j], p)) std::swap(FUCK[j+1], FUCK[j]);
     } else mergeSort(l, r, p);
-
-    quickSort(l, r, p);
 }
 
 int switchTsToInt(char timeStamp[]) {
@@ -340,18 +317,17 @@ BPT<string_t, Account> userList("1");
 BPT<string_t, bool> loginList("2");
 BPT<string_t, Train> trainList("3");
 BPT<string_t, bool> releaseList("4");
-//BPT<string_t, Station> stationList("5");
-//wrapFstream<trainOnStation> ioStation("6");
+BPT<string_t, Station> stationList("5");
+wrapFstream<trainOnStation> ioStation("6");
 BPT<pair<string_t, int>, Trip> tripList("7");
 //wrapFstream<orderOnTrip> ioOrder("8");
 wrapFstream<tripOnStation> ioTrip("9");
 BPT<string_t, Station> stationTfList("10");
 //wrapFstream<orderOnAccount> ioAccount("11");
 BPT<pair<string_t, int>, int> checkYourCode("12");
-
 BPT<pair<string_t, int>, orderOnAccount> userToOrder("13");
 BPT<pair<pair<string_t, int>, int>, orderOnTrip> tripToOrder("14");
-BPT<pair<string_t, string_t>, trainOnStation> stationToTrain("15");
+
 
 void satisfiyOrder(const string_t &username, int ts) {
     /*
@@ -367,19 +343,18 @@ void satisfiyOrder(const string_t &username, int ts) {
             break;
         }
         ptr = orderA.nextAddr;
-    }
+    }*/
+    /*
     int ptr = checkYourCode.find(pair<string_t, int>(username, ts)).second;
     checkYourCode.erase(pair<string_t, int>(username, ts));
     orderOnAccount orderA;
     ioAccount.read(orderA, ptr);
     orderA.status = orderOnAccount::success;
     ioAccount.write(orderA, ptr);*/
-
     auto orderA = userToOrder.find(pair<string_t, int>(username, ts)).second;
     orderA.status = orderOnAccount::success;
     userToOrder.modify(pair<string_t, int>(username, ts), orderA);
 }
-
 
 void query_order(BPT<pair<string_t, int>, orderOnAccount>::iterator &it, const string_t &username) {
     orderOnAccount orderA;
@@ -405,11 +380,9 @@ char _key[50], operationName[20];
 int timeStamp;
 char tmpStr[10010];
 int main() {
-    string_t MIN_STRING_T;
-    MIN_STRING_T.s[0] = 1;
-    MIN_STRING_T.s[1] = 0;
-    freopen("testcases/basic_2/1.in", "r", stdin);
-    freopen("my.out", "w", stdout);
+
+    //freopen("testcases/basic_2/1.in", "r", stdin);
+    //freopen("my.out", "w", stdout);
     bool isFirstUser = userList.empty();
     //std::string timeStamp, operationName, _key;
 
@@ -498,7 +471,7 @@ int main() {
                 }
             }
 
-#ifndef DISABLE_query_profile
+
             bool ok = false;
             if (loginList.find(curUsername).first) {
                 auto queryUser = userList.find(username);
@@ -513,7 +486,6 @@ int main() {
             if (!ok) {
                 printf("[%d] -1\n", timeStamp);
             }
-#endif
         }
         else if (!strcmp(operationName, "modify_profile")) {
             Account newAcc;
@@ -708,14 +680,15 @@ int main() {
                         nodeInfo.arriveTime = nodeInfo.leaveTime + curTrain.second.travelTimes[i-1];
                         if (i < curTrain.second.stationNum - 1) nodeInfo.leaveTime = nodeInfo.arriveTime + curTrain.second.stopoverTimes[i];
                     }
-                    stationToTrain.insert(pair<string_t, string_t>(curTrain.second.stations[i], nodeInfo.trainID), nodeInfo);
-
-                    /*
                     string_t stationID(curTrain.second.stations[i]);
                     auto curStation = stationList.find(stationID);
                     int head = curStation.second.head;
 
                     if (head == -1) {
+                        /*ioStation.read(head, 0);
+                        head += sizeof(trainOnStation);
+                        ioStation.write(head, 0);
+                        head -= sizeof(trainOnStation);*/
                         head = ioStation.newPos();
                         ioStation.write(nodeInfo, head);
                     } else {
@@ -755,7 +728,6 @@ int main() {
                         if(curStation.first) stationList.modify(stationID, curStation.second);
                         else stationList.insert(stationID, curStation.second);
                     }
-                    */
                 }
                 printf("[%d] 0\n", timeStamp);
             } else {
@@ -763,7 +735,6 @@ int main() {
             }
         }
         else if (!strcmp(operationName, "query_train")) {
-
             int date;
             string_t trainID;
             char dateString[6];
@@ -779,7 +750,6 @@ int main() {
                 }
             }
 
-#ifndef DISABLE_query_train
             auto curTrain = trainList.find(trainID);
             if (curTrain.first && date >= curTrain.second.saleDateBegin && date <= curTrain.second.saleDateEnd) {
                 //std::cout << timeStamp << ' ' << trainID << ' ' << curTrain.second.type << std::endl;
@@ -823,7 +793,6 @@ int main() {
                 //std::cout << timeStamp << ' ' << -1 << std::endl;
                 printf("[%d] -1\n", timeStamp);
             }
-#endif
         }
         else if (!strcmp(operationName, "query_ticket")) {
 
@@ -838,76 +807,23 @@ int main() {
                     case 's': scanf("%s", startStationID.s); break;
                     case 't': scanf("%s", toStationID.s); break;
                     case 'd':
+                        //std::cin >> dateString;
                         scanf("%s", dateString);
                         date = calcDay((dateString[0] - '0') * 10 + (dateString[1] - '0'), (dateString[3] - '0') * 10 + (dateString[4] - '0'));
                         break;
                     case 'p':
+                        //std::cin >> tmp;
                         scanf("%s", tmpStr);
+                        //if (tmp == "time") sortPattern = 0;
                         if (!strcmp(tmpStr, "time")) sortPattern = 0;
                         else sortPattern = 1;
                 }
             }
-#ifndef DISABLE_query_ticket
-            //Station startStation = stationList.find(startStationID).second;
-            //Station toStation = stationList.find(toStationID).second;
+            Station startStation = stationList.find(startStationID).second;
+            Station toStation = stationList.find(toStationID).second;
 
-            //int ps = startStation.head, pt = toStation.head;
-
-            BPT<pair<string_t, string_t>, trainOnStation>::iterator itS, itT;
+            int ps = startStation.head, pt = toStation.head;
             queryTicketNum = 0;
-            if (stationToTrain.lower_bound(itS, pair<string_t, string_t>(startStationID, MIN_STRING_T))
-                && stationToTrain.lower_bound(itT, pair<string_t, string_t>(toStationID, MIN_STRING_T))) {
-                trainOnStation ss, tt;
-                pair<string_t, string_t> tmp;
-                bool flag = true;
-                itS.getFirst(tmp);
-                if (tmp.first != startStationID) flag = false;
-                itS.getSecond(ss);
-
-                itT.getFirst(tmp);
-                if (tmp.first != toStationID) flag = false;
-                itT.getSecond(tt);
-            if (flag)
-                while (true) {
-                    if (ss.trainID == tt.trainID) {
-                        if (ss.ordinal < tt.ordinal && ss.checkLeaveDate(date)) {
-                            ++queryTicketNum;
-                            FUCK[queryTicketNum].trainID = ss.trainID;
-                            FUCK[queryTicketNum].takeTime = tt.arriveTime - ss.leaveTime;
-                            FUCK[queryTicketNum].price = tt.arrivePrice - ss.arrivePrice;
-                            FUCK[queryTicketNum].leaveTime = (ss.leaveTime + ss.startTime) % 1440;
-
-                            int startDate = getDateByMinute((date - 1) * 1440 + FUCK[queryTicketNum].leaveTime - ss.leaveTime);
-
-                            Trip curTrip = tripList.find(pair<string_t, int>(ss.trainID, startDate)).second;
-                            FUCK[queryTicketNum].seat = curTrip.restSeat[ss.ordinal];
-                            for (int i = ss.ordinal + 1; i < tt.ordinal; ++i) {
-                                FUCK[queryTicketNum].seat = std::min(FUCK[queryTicketNum].seat, curTrip.restSeat[i]);
-                            }
-                        }
-                        if (!itS.plusplus()) break;
-                        itS.getFirst(tmp);
-                        if (tmp.first != startStationID) break;
-                        itS.getSecond(ss);
-
-                        if (!itT.plusplus()) break;
-                        itT.getFirst(tmp);
-                        if (tmp.first != toStationID) break;
-                        itT.getSecond(tt);
-                    } else if (ss.trainID < tt.trainID) {
-                        if (!itS.plusplus()) break;
-                        itS.getFirst(tmp);
-                        if (tmp.first != startStationID) break;
-                        itS.getSecond(ss);
-                    } else {
-                        if (!itT.plusplus()) break;
-                        itT.getFirst(tmp);
-                        if (tmp.first != toStationID) break;
-                        itT.getSecond(tt);
-                    }
-                }
-            }
-            /*
             if (ps != -1 && pt != -1) {
                 trainOnStation ss, tt;
                 ioStation.read(ss, ps);
@@ -947,7 +863,6 @@ int main() {
                     }
                 }
             }
-            */
             if (queryTicketNum > 0) {
                 sort(1, queryTicketNum, sortPattern);
             }
@@ -962,7 +877,6 @@ int main() {
                 //std::cout << ' ' << FUCK[i].price << ' ' << FUCK[i].seat << std::endl;
                 printf(" %d %d\n", FUCK[i].price, FUCK[i].seat);
             }
-#endif
         }
         else if (!strcmp(operationName, "query_transfer")) {
             string_t startStationID, toStationID;
@@ -988,158 +902,6 @@ int main() {
                         else sortPattern = 1;
                 }
             }
-#ifndef DISABLE_query_transfer
-            BPT<pair<string_t, string_t>, trainOnStation>::iterator itS, itT;
-            bool ok = 0;
-            queryTransferResult res;
-            if (stationToTrain.lower_bound(itS, pair<string_t, string_t>(startStationID, MIN_STRING_T))
-                && stationToTrain.lower_bound(itT, pair<string_t, string_t>(toStationID, MIN_STRING_T))) {
-                ioTrip.clear();
-                stationTfList.clear();
-                trainOnStation ss, tt;
-                pair<string_t, string_t> tmp;
-
-                bool flag = true;
-                itS.getFirst(tmp);
-                if (tmp.first != startStationID) flag = false;
-                itS.getSecond(ss);
-
-                itT.getFirst(tmp);
-                if (tmp.first != toStationID) flag = false;
-                itT.getSecond(tt);
-                if (flag) {
-                    while (true) {
-
-                        if (ss.checkLeaveDate(date)) {
-
-                            Train curTrain = trainList.find(ss.trainID).second;
-                            int startDate = getDateByMinute(
-                                    (date - 1) * 1440 + (ss.startTime + ss.leaveTime) % 1440 - ss.leaveTime);
-                            Trip curTrip = tripList.find(pair<string_t, int>(ss.trainID, startDate)).second;
-                            //int maxSeat = curTrip.restSeat[ss.ordinal], price = 0, taketime = 0;
-                            tripOnStation tripInfo;
-                            tripInfo.trainID = ss.trainID;
-                            tripInfo.startTime = (ss.startTime + ss.leaveTime) % 1440;
-                            tripInfo.arriveTime = (date - 1) * 1440 + tripInfo.startTime;
-                            tripInfo.takeTime = 0;
-                            tripInfo.seat = curTrip.restSeat[ss.ordinal];
-                            tripInfo.price = 0;
-                            for (int i = ss.ordinal + 1; i < curTrain.stationNum; ++i) {
-                                tripInfo.seat = std::min(tripInfo.seat, curTrip.restSeat[i - 1]);
-                                tripInfo.price += curTrain.prices[i - 1];
-                                tripInfo.takeTime += curTrain.travelTimes[i - 1];
-                                tripInfo.arriveTime += curTrain.travelTimes[i - 1];
-                                tripInfo.nextAddr = -1;
-                                Station curStation = stationTfList.find(curTrain.stations[i]).second;
-
-                                if (curStation.head == -1) {
-                                    curStation.head = ioTrip.newPos();
-                                    ioTrip.write(tripInfo, curStation.head);
-                                    stationTfList.insert(curTrain.stations[i], curStation);
-                                } else {
-                                    tripOnStation ttmp;
-                                    ioTrip.read(ttmp, curStation.head);
-                                    tripInfo.nextAddr = ttmp.nextAddr;
-                                    ttmp.nextAddr = ioTrip.newPos();
-                                    ioTrip.write(ttmp, curStation.head);
-                                    ioTrip.write(tripInfo, ttmp.nextAddr);
-
-                                }
-
-                                if (i < curTrain.stationNum - 1) {
-                                    tripInfo.takeTime += curTrain.stopoverTimes[i];
-                                    tripInfo.arriveTime += curTrain.stopoverTimes[i];
-                                }
-                            }
-                        }
-
-                        if (!itS.plusplus()) break;
-                        itS.getFirst(tmp);
-                        if (tmp.first != startStationID) break;
-                        itS.getSecond(ss);
-                    }
-                    while (true) {
-
-                        Train curTrain = trainList.find(tt.trainID).second;
-
-                        for (int i = curTrain.saleDateBegin; i <= curTrain.saleDateEnd; ++i) {
-                            tmpTrip[i - curTrain.saleDateBegin].stationNum = -1;
-                        }
-                        int price = 0, totalTime = 0, tttt;
-                        for (int i = 0; i < tt.ordinal; ++i) {
-                            totalTime += curTrain.stopoverTimes[i];
-                            totalTime += curTrain.travelTimes[i];
-                        }
-                        tttt = totalTime;
-                        //if (tt.ordinal < curTrain.stationNum - 1) totalTime += curTrain.stopoverTimes[tt.ordinal];
-                        for (int i = tt.ordinal - 1; i >= 0; --i) {
-                            //    takeTime += curTrain.travelTimes[i];
-                            totalTime -= curTrain.travelTimes[i];
-                            price += curTrain.prices[i];
-                            Station curStation = stationTfList.find(curTrain.stations[i]).second;
-                            if (curStation.head != -1) {
-                                tripOnStation ttmp;
-                                ioTrip.read(ttmp, curStation.head);
-                                while (true) {
-                                    //todo: whether "<=" or "<"
-                                    if (ttmp.trainID != curTrain.trainID && ttmp.arriveTime <=
-                                                                            (curTrain.saleDateEnd - 1) * 1440 +
-                                                                            curTrain.startTime + totalTime) {
-                                        int startDay = curTrain.saleDateEnd - std::min(
-                                                ((curTrain.saleDateEnd - 1) * 1440 + curTrain.startTime + totalTime -
-                                                 ttmp.arriveTime) / 1440,
-                                                curTrain.saleDateEnd - curTrain.saleDateBegin);
-
-                                        if (tmpTrip[startDay - curTrain.saleDateBegin].stationNum == -1) {
-
-                                            tmpTrip[startDay - curTrain.saleDateBegin] =
-                                                    tripList.find(
-                                                            pair<string_t, int>(curTrain.trainID, startDay)).second;
-                                        }
-                                        auto &curTrip = tmpTrip[startDay - curTrain.saleDateBegin];
-                                        queryTransferResult curRes;
-                                        curRes.trainID1 = ttmp.trainID;
-                                        curRes.trainID2 = curTrain.trainID;
-                                        curRes.time = ((startDay - 1) * 1440 + curTrain.startTime + tttt) -
-                                                      (ttmp.startTime + (date - 1) * 1440);
-                                        curRes.startTime1 = ttmp.startTime;
-                                        curRes.arriveTime1 = ttmp.arriveTime;
-                                        curRes.startTime2 = (startDay - 1) * 1440 + curTrain.startTime + totalTime;
-                                        curRes.arriveTime2 = (startDay - 1) * 1440 + curTrain.startTime + tttt;
-                                        curRes.price = ttmp.price + price;
-                                        curRes.price1 = ttmp.price;
-                                        curRes.price2 = price;
-                                        curRes.transferStation = curTrain.stations[i];
-                                        curRes.seat1 = ttmp.seat;
-                                        curRes.seat2 = curTrip.restSeat[i];
-                                        for (int j = i; j < tt.ordinal; ++j)
-                                            curRes.seat2 = std::min(curRes.seat2, curTrip.restSeat[j]);
-
-                                        if (!ok || cmpQueryTransferResult(curRes, res, sortPattern)) {
-                                            ok = true;
-                                            res = curRes;
-                                        }
-                                    }
-
-                                    int next = ttmp.nextAddr;
-                                    if (next == -1) break;
-                                    ioTrip.read(ttmp, next);
-                                }
-                            }
-
-                            totalTime -= curTrain.stopoverTimes[i];
-                            //if (i > 0) takeTime += curTrain.stopoverTimes[i];
-                        }
-
-                        if (!itT.plusplus()) break;
-                        itT.getFirst(tmp);
-                        if (tmp.first != toStationID) break;
-                        itT.getSecond(tt);
-                    }
-                }
-            }
-            //FUCK_IF_2:;
-            /*
             Station startStation = stationList.find(startStationID).second;
             Station toStation = stationList.find(toStationID).second;
             int ps = startStation.head, pt = toStation.head;
@@ -1183,7 +945,15 @@ int main() {
                                 ttmp.nextAddr = ioTrip.newPos();
                                 ioTrip.write(ttmp, curStation.head);
                                 ioTrip.write(tripInfo, ttmp.nextAddr);
-
+                                /*
+                                int last = curStation.head;
+                                while (ttmp.nextAddr != -1) {
+                                    last = ttmp.nextAddr;
+                                    ioTrip.read(ttmp, last);
+                                }
+                                ttmp.nextAddr = ioTrip.newPos();
+                                ioTrip.write(ttmp, last);
+                                ioTrip.write(tripInfo, ttmp.nextAddr);*/
                             }
 
                             if (i < curTrain.stationNum - 1) {
@@ -1263,7 +1033,6 @@ int main() {
 
                 }
             }
-            */
 
             if (ok) {
                 //std::cout << timeStamp << ' ';
@@ -1290,7 +1059,6 @@ int main() {
                 //std::cout << timeStamp << ' ' << 0 << std::endl;
                 printf("[%d] 0\n", timeStamp);
             }
-#endif
         }
         else if (!strcmp(operationName, "buy_ticket")) {
 
@@ -1322,7 +1090,6 @@ int main() {
                         break;
                 }
             }
-#ifndef DISABLE_buy_ticket
             bool ok = false;
             if (loginList.find(curUsername).first && releaseList.find(orderA.trainID).first) {
                 Account curUser = userList.find(curUsername).second;
@@ -1349,7 +1116,8 @@ int main() {
                         int startDate = curTrain.saleDateBegin +
                                         (((date - 1) * 1440 + (curTrain.startTime + sumTime[sOrdinal]) % 1440) -
                                          ((curTrain.saleDateBegin - 1) * 1440 + curTrain.startTime +
-                                          sumTime[sOrdinal])) / 1440;
+                                          sumTime[sOrdinal])) /
+                                        1440;
                         Trip curTrip = tripList.find(pair<string_t, int>(orderA.trainID, startDate)).second;
 
                         int maxSeat = curTrip.restSeat[sOrdinal];
@@ -1382,11 +1150,12 @@ int main() {
                             userList.modify(curUsername, curUser);
 
                             ok = true;
+                            //std::cout << timeStamp << ' ' << (long long) orderA.seat * orderA.price << std::endl;
                             printf("[%d] %lld\n", timeStamp, (long long)orderA.seat * orderA.price);
                         } else if (isCandidate) {
                             orderA.status = orderOnAccount::pending;
-/*
-                            orderA.nextAddr = curUser.head;
+
+                            /*orderA.nextAddr = curUser.head;
                             curUser.head = ioAccount.newPos();
                             ioAccount.write(orderA, curUser.head);
                             userList.modify(curUsername, curUser);
@@ -1400,8 +1169,8 @@ int main() {
 
                             curTrip.head = ioOrder.newPos();
                             ioOrder.write(orderT, curTrip.head);
-                            tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);
-*/
+                            tripList.modify(pair<string_t, int>(orderA.trainID, startDate), curTrip);*/
+
                             userToOrder.insert(pair<string_t, int>(curUsername, timeStamp), orderA);
                             curUser.orderNum++;
                             userList.modify(curUsername, curUser);
@@ -1421,7 +1190,6 @@ int main() {
             if (!ok) {
                 printf("[%d] -1\n", timeStamp);
             }
-#endif
         }
         else if (!strcmp(operationName, "query_order")) {
             string_t curUsername;
@@ -1432,7 +1200,6 @@ int main() {
                     case 'u': scanf("%s", curUsername.s); break;
                 }
             }
-#ifndef DISABLE_query_order
             if (loginList.find(curUsername).first) {
                 Account curUser = userList.find(curUsername).second;
                 printf("[%d] %d\n", timeStamp, curUser.orderNum);
@@ -1444,7 +1211,6 @@ int main() {
             } else {
                 printf("[%d] -1\n", timeStamp);
             }
-#endif
         }
         else if (!strcmp(operationName, "refund_ticket")) {
             string_t curUsername;
@@ -1457,11 +1223,10 @@ int main() {
                     case 'n': scanf("%d", &num); break;
                 }
             }
-
             bool ok = false;
             if (loginList.find(curUsername).first) {
                 Account curUser = userList.find(curUsername).second;
-                if (curUser.orderNum >= num) {
+                if (num <= curUser.orderNum) {
                     num = curUser.orderNum - num + 1;
                     BPT<pair<string_t, int>, orderOnAccount>::iterator itA;
                     userToOrder.lower_bound(itA, pair<string_t, int>(curUsername, 0));
@@ -1508,6 +1273,8 @@ int main() {
                     } else if (orderA.status == orderOnAccount::pending) {
                         orderA.status = orderOnAccount::refunded;
                         itA.modify(orderA);
+                        tripToOrder.erase(pair<pair<string_t, int>, int>(pair<string_t, int>(orderA.trainID, orderA.startDate), orderA.timeStamp));
+                        /*
                         BPT<pair<pair<string_t, int>, int>, orderOnTrip>::iterator itT;
                         tripToOrder.lower_bound(itT, pair<pair<string_t, int>, int>(pair<string_t, int>(orderA.trainID, orderA.startDate), 0));
                         pair<pair<string_t, int>, int> tmp;
@@ -1518,11 +1285,13 @@ int main() {
                                 break;
                             }
                             itT.plusplus();
-                        }
+                        }*/
+
                         ok = true;
                         printf("[%d] 0\n", timeStamp);
                     }
                 }
+
             }
             if (!ok) {
                 printf("[%d] -1\n", timeStamp);
@@ -1533,18 +1302,13 @@ int main() {
             loginList.clear();
             trainList.clear();
             releaseList.clear();
-            //stationList.clear();
-            //ioStation.clear();
+            stationList.clear();
+            ioStation.clear();
             tripList.clear();
             //ioOrder.clear();
-            //ioTrip.clear();
-            //stationTfList.clear();
+            ioTrip.clear();
+            stationTfList.clear();
             //ioAccount.clear();
-            checkYourCode.clear();
-
-            userToOrder.clear();
-            tripToOrder.clear();
-            stationToTrain.clear();
             printf("[%d] 0\n", timeStamp);
             scanf("%s", _key);
         }
