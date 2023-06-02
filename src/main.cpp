@@ -1,5 +1,7 @@
 #include "BPlusTree.h"
-
+//#define DISABLE_query_order
+//#define DISABLE_query_transfer
+//#define DISABLE_refund_ticket
 int sumMonth[] = {0, 31,59,90,120,151,181,212,243,273,304,334,365};
 inline int calcDay(int month, int day) {
     return sumMonth[month-1] + day;
@@ -208,6 +210,7 @@ public:
     string_t mailAddr;
     int privilege{-1};
     int orderNum{0};
+    int firstTS{0};
     Account(): privilege(-1) {}
     bool operator<(const Account &obj) const {
         return username < obj.username;
@@ -381,14 +384,15 @@ int timeStamp;
 char tmpStr[10010];
 int main() {
 
-    //freopen("testcases/basic_2/1.in", "r", stdin);
-    //freopen("my.out", "w", stdout);
+    freopen("testcases/basic_2/1.in", "r", stdin);
+    freopen("my.out", "w", stdout);
     bool isFirstUser = userList.empty();
     //std::string timeStamp, operationName, _key;
 
     scanf("%s", _key);
 
     while (true) {
+
 
         timeStamp = switchTsToInt(_key);
         scanf("%s", operationName);
@@ -902,6 +906,7 @@ int main() {
                         else sortPattern = 1;
                 }
             }
+#ifndef DISABLE_query_transfer
             Station startStation = stationList.find(startStationID).second;
             Station toStation = stationList.find(toStationID).second;
             int ps = startStation.head, pt = toStation.head;
@@ -1059,6 +1064,7 @@ int main() {
                 //std::cout << timeStamp << ' ' << 0 << std::endl;
                 printf("[%d] 0\n", timeStamp);
             }
+#endif
         }
         else if (!strcmp(operationName, "buy_ticket")) {
 
@@ -1147,6 +1153,7 @@ int main() {
                             userList.modify(curUsername, curUser);*/
                             userToOrder.insert(pair<string_t, int>(curUsername, timeStamp), orderA);
                             curUser.orderNum++;
+                            if (curUser.orderNum == 1) curUser.firstTS = timeStamp;
                             userList.modify(curUsername, curUser);
 
                             ok = true;
@@ -1173,6 +1180,7 @@ int main() {
 
                             userToOrder.insert(pair<string_t, int>(curUsername, timeStamp), orderA);
                             curUser.orderNum++;
+                            if (curUser.orderNum == 1) curUser.firstTS = timeStamp;
                             userList.modify(curUsername, curUser);
                             orderOnTrip orderT;
                             orderT.timestamp = orderA.timeStamp;
@@ -1200,17 +1208,22 @@ int main() {
                     case 'u': scanf("%s", curUsername.s); break;
                 }
             }
+#ifndef DISABLE_query_order
             if (loginList.find(curUsername).first) {
                 Account curUser = userList.find(curUsername).second;
                 printf("[%d] %d\n", timeStamp, curUser.orderNum);
                 if (curUser.orderNum > 0) {
                     BPT<pair<string_t, int>, orderOnAccount>::iterator it;
-                    userToOrder.lower_bound(it, pair<string_t, int>(curUsername, 0));
+                    bool fxxk = userToOrder.lower_bound(it, pair<string_t, int>(curUsername, curUser.firstTS));
+                    //assert(fxxk == true);
                     query_order(it, curUsername);
+
+
                 }
             } else {
                 printf("[%d] -1\n", timeStamp);
             }
+#endif
         }
         else if (!strcmp(operationName, "refund_ticket")) {
             string_t curUsername;
@@ -1223,6 +1236,7 @@ int main() {
                     case 'n': scanf("%d", &num); break;
                 }
             }
+#ifndef DISABLE_refund_ticket
             bool ok = false;
             if (loginList.find(curUsername).first) {
                 Account curUser = userList.find(curUsername).second;
@@ -1235,7 +1249,8 @@ int main() {
                     itA.getSecond(orderA);
                     if (orderA.status == orderOnAccount::success) {
                         orderA.status = orderOnAccount::refunded;
-                        itA.modify(orderA);
+                        //itA.modify(orderA);
+                        userToOrder.modify(pair<string_t, int>(curUsername, orderA.timeStamp), orderA);
                         Trip curTrip = tripList.find(pair<string_t, int>(orderA.trainID, orderA.startDate)).second;
                         for (int i = orderA.sOrdinal; i < orderA.tOrdinal; ++i)
                             curTrip.restSeat[i] += orderA.seat;
@@ -1296,6 +1311,7 @@ int main() {
             if (!ok) {
                 printf("[%d] -1\n", timeStamp);
             }
+#endif
         }
         else if (!strcmp(operationName, "clean")) {
             userList.clear();

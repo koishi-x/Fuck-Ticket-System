@@ -59,7 +59,7 @@ template<class Key, class T>
 class BPT {
 public:
     class iterator;
-private:
+//private:
     static constexpr int BLOCK_SIZE = 16384;
     static constexpr int M = (BLOCK_SIZE - 9) / (4 + sizeof(Key));
     static constexpr int L = (BLOCK_SIZE - 13) / (sizeof(Key) + sizeof(T)) - 1;
@@ -69,6 +69,9 @@ private:
     int last;
     std::fstream io;
 
+    struct ZHANWEIFU {
+        bool qwq[BLOCK_SIZE]{0};
+    };
     struct dataInfo {
         Key key;
         T value;
@@ -123,6 +126,7 @@ private:
     int newPos() {
         //todo:recycle space
         last += BLOCK_SIZE;
+        write(ZHANWEIFU(), last);
         return last;
     }
 
@@ -550,7 +554,7 @@ private:
                 io.read(it.blockInfo, BLOCK_SIZE);
                 return true;
             }
-            for (int i = 0; i < n; --i) {
+            for (int i = 0; i < n; ++i) {
                 if (!(tmp.data[i].key < key)) {
                     it.i = i;
                     it.n = tmp.n;
@@ -632,19 +636,19 @@ public:
         }
         bool getFirst(Key &key) {
             if (addr == -1) return false;
-            memcpy(reinterpret_cast<char*>(&key), blockInfo + 13 + (i - 1) * sizeof(dataInfo), sizeof(Key));
+            memcpy(reinterpret_cast<char*>(&key), blockInfo + 13 + i * sizeof(dataInfo), sizeof(Key));
             return true;
         }
 
         bool getSecond(T &value) {
             if (addr == -1) return false;
             //assert(addr != -1);
-            memcpy(reinterpret_cast<char*>(&value), blockInfo + 13 + (i - 1) * sizeof(dataInfo) + sizeof(Key), sizeof(T));
+            memcpy(reinterpret_cast<char*>(&value), blockInfo + 13 + i * sizeof(dataInfo) + sizeof(Key), sizeof(T));
             return true;
         }
 
         void modify(const T &value) {
-            memcpy(blockInfo + 13 + (i - 1) * sizeof(dataInfo) + sizeof(Key), reinterpret_cast<const char*>(&value), sizeof(T));
+            memcpy(blockInfo + 13 + i * sizeof(dataInfo) + sizeof(Key), reinterpret_cast<const char*>(&value), sizeof(T));
             ptr->io.seekp(addr);
             ptr->io.write(blockInfo, BLOCK_SIZE);
         }
@@ -653,6 +657,34 @@ public:
     bool lower_bound(iterator &it, const Key &key) {
         if (empty()) return false;
         return Lower_bound(root, it, key);
+
+        bodyNode tmpB;
+        leafNode tmpL;
+        bool nodeType;
+        int addr = root;
+        read(nodeType, addr);
+        while (!nodeType) {
+            read(tmpB);
+            addr = tmpB.addr[0];
+            read(nodeType, addr);
+        }
+        read(tmpL);
+        while (true) {
+            for (int i = 0; i < tmpL.n; ++i) {
+                if (!(tmpL.data[i].key < key)) {
+                    it.n = tmpL.n;
+                    it.i = i;
+                    it.addr = addr;
+                    it.ptr = this;
+                    io.seekg(addr);
+                    io.read(it.blockInfo, BLOCK_SIZE);
+                    return true;
+                }
+            }
+            addr = tmpL.nextAddr;
+            if (addr == -1) return false;
+            read(tmpL, addr + 1);
+        }
     }
 
     void insert(const Key &key, const T &value) {
